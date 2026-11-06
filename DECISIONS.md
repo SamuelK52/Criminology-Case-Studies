@@ -1,0 +1,19 @@
+# Decisions
+
+Simplest reasonable choices made where the brief was unclear. Newest at the bottom.
+
+| # | Date | Decision | Why |
+|---|---|---|---|
+| 1 | 2026-11-06 | Project lives in `C:\Users\Samuel\dev\caselab`, outside OneDrive. | OneDrive syncing `node_modules` causes slow installs and `EPERM` file-lock errors. GitHub is the backup. |
+| 2 | 2026-11-06 | Next.js 16.4 rather than 14. | The brief says "14+", and `create-next-app` installs 16. In 16, middleware is called `proxy.ts`, and Cache Components is on, so session reads sit behind `<Suspense>`. |
+| 3 | 2026-11-06 | `cases` has both `original_verdict` and `latest_outcome`. The prototype's single outcome text is seeded into `latest_outcome`, word for word, and `original_verdict` starts empty for lecturers to fill in. | The accuracy NFR says the two are always shown separately, but the seed has only one field, and case facts must not be rewritten. |
+| 4 | 2026-11-06 | Sign-up offers Student, Study group and Lecturer. Lecturer is a *request* (`requested_role`) that the builder approves. Builder is set only by SQL / `npm run db:setup -- --builder email`. | Otherwise anyone could self-assign a role that edits the shared case bank. |
+| 5 | 2026-11-06 | Logged-out visitors (`anon`) can read the **shared** case bank only. | The case facts are public and this let Milestone 1 prove the list loads before auth existed. Notes, resources, progress and class cases still need sign-in. |
+| 6 | 2026-11-06 | The prototype's 4 auto-made flashcards per case (`seedCards`) are stored as `derived` rows, rebuilt by a trigger when a case changes. Case 16's 7 EXTRA cards are `seed` rows (slots 1–7) and come first. | A lecturer's correction then reaches the cards, and students keep their spaced-repetition progress because card IDs don't change. |
+| 7 | 2026-11-06 | The seed quiz is built at runtime from the case bank (as in the prototype). Nothing is stored. | It shuffles distractors from other cases each time. |
+| 8 | 2026-11-06 | The PDPA guard is enforced in **both** the UI (`src/lib/pii.ts`) and the database (`has_pii()` check constraints). Boundaries are "not a digit", so a 17-digit number isn't flagged. A test checks that both agree. | The brief wants a clear message in the UI. The database stops a bypass. |
+| 9 | 2026-11-06 | The AI rate limit (20 per user per rolling hour) is a Postgres function `ai_take_token()` that checks and records in one locked step. | It works on Vercel's stateless functions without Redis. |
+| 10 | 2026-11-06 | A user's own case may not reuse a shared-bank case name, and user cases get codes `U1`, `U2`, … | Matches the prototype's duplicate check ("That case is already in the list.") and "U" ids. |
+| 11 | 2026-11-06 | Lecturers can edit shared-bank cases (needed for FR-13: "Lecturer edits case 10") and cases in classes they teach, but can't change owner/code/class or delete cases they don't own. | Matches the role matrix: lecturers correct cases, but can't delete. |
+| 12 | 2026-11-06 | Study-group members can save their own flashcard progress and quiz scores, but can't reset progress or write anything else. | The brief says they "flip flashcards, take quizzes and see their own progress", and the prototype locks Reset for them. |
+| 13 | 2026-11-06 | DB tests use PGlite with a stand-in `auth` schema instead of a local Supabase. | No Docker on this machine. PGlite runs the real migrations in real Postgres. |

@@ -1,0 +1,314 @@
+<title>CaseLab Criminology</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=Libre+Caslon+Text:ital,wght@0,400;0,700;1,400&family=IBM+Plex+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: archive cabinet — index-card drawer on the left, a colour-coded folder (tabs + body) on the right holding paper sheets */
+:root{--desk:#141312;--ink:#1b1a18;--paper:#f3efe6;--paper-2:#e9e3d6;--rule:#cfd9e6;--hole:#141312;--mute:#6b665d;
+--cobalt:#2547d0;--signal:#d9271e;--emerald:#11795b;--lemon:#f4d81c;--violet:#5b2a86;--black:#0b0b0b;
+--pink:#f2b8c6;--mint:#a9dccb;--butter:#f7e39a;--lav:#c9b8f0;
+--accent:#11795b;--warn:#b7791f;--bad:#d9271e;--line:#cfc6b4;--fg:#1b1a18;--folder:var(--signal);
+--display:"Anton","Arial Narrow",Impact,sans-serif;--body:"Libre Caslon Text",Georgia,"Times New Roman",serif;--mono:"IBM Plex Mono",ui-monospace,monospace;color-scheme:dark}
+body{background:var(--desk);color:var(--paper);font:16px/1.65 var(--body)}
+.wrap{max-width:1220px;margin:0 auto;padding-block:24px 64px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+header{display:grid;grid-template-columns:1fr auto;gap:16px 24px;align-items:end;padding-bottom:20px}
+@media(max-width:640px){header{grid-template-columns:1fr}}
+.logo{font:600 13px var(--mono);color:var(--paper);letter-spacing:.02em}.logo b{color:#00dcb4;font-weight:600}
+h1{font:400 clamp(44px,9vw,104px)/.9 var(--display);text-transform:uppercase;margin:10px 0 8px;color:var(--paper);text-wrap:balance;letter-spacing:.005em}
+.sub{color:var(--mute);font:13px/1.5 var(--mono)}
+header .sub{color:#a29a8c}
+.meta-col{font:12px/1.6 var(--mono);color:#a29a8c;text-align:right}@media(max-width:640px){.meta-col{text-align:left}}
+.grid{display:grid;grid-template-columns:270px 1fr;gap:28px}
+@media(max-width:860px){.grid{grid-template-columns:1fr}}
+.side{background:var(--paper-2);color:var(--ink);padding:16px;align-self:start;min-width:0;box-shadow:0 10px 24px rgba(0,0,0,.45);border-radius:2px}
+.lbl{font:600 11px var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--mute);margin:2px 0 10px}
+.cases{display:flex;flex-direction:column;gap:6px;max-height:460px;overflow-y:auto;overflow-x:hidden;padding:2px 6px 2px 2px;overscroll-behavior:contain;scrollbar-gutter:stable;-webkit-overflow-scrolling:touch}
+.case{all:unset;cursor:pointer;display:flex;gap:10px;align-items:baseline;padding:7px 10px;background:var(--paper);font:15px/1.3 var(--body);color:var(--ink);border-left:6px solid var(--c,var(--black));box-shadow:0 1px 0 var(--line)}
+.case span{font:11px var(--mono);color:var(--mute)}
+.case{flex-shrink:0}.case:hover{border-left-width:10px;padding-left:6px}
+.case[aria-current="true"]{background:var(--c);color:#fff}.case[aria-current="true"] span{color:inherit;opacity:.8}
+.case[aria-current="true"][data-j="own"]{color:var(--ink)}
+:focus-visible{outline:2px dashed var(--lemon)!important;outline-offset:3px}
+main{min-width:0}
+.tabs{display:flex;flex-wrap:wrap;align-items:flex-end;gap:0;padding-left:6px}
+.tab{all:unset;cursor:pointer;position:relative;padding:9px 22px 8px;margin-right:-6px;background:var(--t);color:#fff;font:italic 16px/1.2 var(--body);border-radius:14px 14px 0 0;opacity:.72;transform:translateY(4px);transition:transform .15s,opacity .15s}
+.tab[data-light]{color:var(--ink)}
+.tab:hover{opacity:.9;transform:translateY(1px)}
+.tab[aria-selected="true"]{opacity:1;transform:none;z-index:2;padding-bottom:12px}
+#view{background:var(--folder);padding:28px clamp(14px,3vw,34px) 36px;position:relative;z-index:1;box-shadow:0 18px 40px rgba(0,0,0,.5)}
+.folder-cap{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;font:12px var(--mono);color:rgba(255,255,255,.85);margin-bottom:16px;text-transform:none}
+#view[data-light] .folder-cap{color:var(--ink)}
+/* text and controls sitting directly on the coloured folder (outside paper sheets) */
+#view .pane>:not(.card):not(.feat),#view .pane>:not(.card):not(.feat) .sub{color:#fff;font-size:14px}
+#view .pane>:not(.card):not(.feat) .btn.ghost{color:#fff;border-color:#fff;background:rgba(0,0,0,.22)}
+#view .pane>:not(.card):not(.feat) .btn.ghost:hover{background:rgba(0,0,0,.4)}
+#view .pane>:not(.card):not(.feat) .btn:not(.ghost){background:var(--paper);color:var(--ink);box-shadow:3px 3px 0 var(--black)}
+#view[data-light] .pane>:not(.card):not(.feat),#view[data-light] .pane>:not(.card):not(.feat) .sub{color:var(--ink)}
+#view[data-light] .pane>:not(.card):not(.feat) .btn.ghost{color:var(--ink);border-color:var(--ink);background:rgba(255,255,255,.35)}
+#view .pane>p.sub{background:rgba(0,0,0,.22);padding:10px 12px;margin:0;line-height:1.6}
+#view[data-light] .pane>p.sub{background:rgba(255,255,255,.4)}
+.pane{display:flex;flex-direction:column;gap:22px}
+.card{position:relative;background:var(--paper);color:var(--ink);padding:22px 22px 22px 52px;min-width:0;border-radius:1px;box-shadow:0 6px 16px rgba(0,0,0,.28);
+background-image:linear-gradient(transparent 31px,var(--rule) 31px),radial-gradient(circle at 22px 40px,var(--hole) 6px,transparent 7px),radial-gradient(circle at 22px 50%,var(--hole) 6px,transparent 7px);background-size:100% 32px,100% 100%,100% 100%;background-repeat:repeat,no-repeat,no-repeat}
+.card::before{content:"";position:absolute;left:40px;top:0;bottom:0;width:1px;background:rgba(217,39,30,.45)}
+.pane>.card:nth-child(odd){transform:rotate(-.35deg)}.pane>.card:nth-child(even){transform:rotate(.3deg)}
+.dossier{padding-top:26px}
+.dossier h2{font:400 clamp(32px,5vw,54px)/.95 var(--display);text-transform:uppercase;margin:0 0 12px;letter-spacing:.01em}
+h2{font:400 30px/1 var(--display);text-transform:uppercase;margin:0 0 12px}
+.clip{position:absolute;top:-14px;right:26px;width:18px;height:52px;border:3px solid #9a9a9a;border-radius:10px;border-bottom-color:transparent;transform:rotate(8deg)}
+.dossier p:first-of-type::first-letter,.drop::first-letter{float:left;font:400 64px/.8 var(--body);padding:6px 8px 0 0}
+.meta{display:flex;flex-wrap:wrap;gap:8px}
+.chip{font:11px/1.4 var(--mono);padding:4px 8px;background:var(--butter);color:var(--ink);box-shadow:1px 2px 0 rgba(0,0,0,.15)}
+.meta .chip:nth-child(4n+2){background:var(--mint)}.meta .chip:nth-child(4n+3){background:var(--pink)}.meta .chip:nth-child(4n+4){background:var(--lav)}
+.chip.check{background:var(--black);color:var(--lemon)}
+textarea,input,select{width:100%;box-sizing:border-box;background:#fffdf7;color:var(--ink);border:1px solid var(--ink);border-radius:0;padding:9px 10px;font:14px var(--mono)}
+textarea{min-height:130px;resize:vertical;line-height:1.6}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.btn{all:unset;cursor:pointer;background:var(--black);color:var(--paper);font:600 12px var(--mono);text-transform:uppercase;letter-spacing:.06em;padding:9px 14px;box-shadow:3px 3px 0 var(--folder)}
+.btn:hover{transform:translate(-1px,-1px);box-shadow:4px 4px 0 var(--folder)}
+.btn.ghost{background:transparent;color:var(--ink);border:1.5px solid var(--ink);box-shadow:none}
+.btn[disabled]{opacity:.45;pointer-events:none}
+.out{white-space:pre-wrap;font:15px/1.7 var(--body)}
+.scroll{overflow-x:auto}
+table{border-collapse:collapse;width:100%;background:#fffdf7}
+th,td{border:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top;font:14px/1.5 var(--body)}
+th{font:600 11px var(--mono);text-transform:uppercase;letter-spacing:.08em;background:var(--ink);color:var(--paper)}
+.flash{min-height:190px;display:grid;place-items:center;text-align:center;cursor:pointer;font:400 clamp(22px,3vw,30px)/1.15 var(--display);text-transform:uppercase;padding:30px 30px 30px 60px;background-color:var(--butter)}
+.flash.back{font:17px/1.6 var(--body);text-transform:none;background-color:var(--mint)}
+.opt{all:unset;cursor:pointer;display:block;background:#fffdf7;border:1px solid var(--ink);padding:9px 12px;margin-top:6px;font:15px var(--body)}
+.opt:hover{background:var(--butter)}
+.opt.ok{background:var(--mint);border-color:var(--emerald)}.opt.no{background:var(--pink);border-color:var(--signal);text-decoration:line-through}
+.res{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;border-top:1px dashed var(--line);padding-top:10px;margin-top:10px;font-size:15px}
+.res a{color:var(--cobalt);word-break:break-all}
+.feat{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:18px}
+.feat .card{padding:18px;background-image:none;transform:rotate(var(--r,0deg))}
+.feat .card::before{display:none}
+.feat .card:nth-child(4n+1){background:var(--butter)}.feat .card:nth-child(4n+2){background:var(--mint);--r:.8deg}.feat .card:nth-child(4n+3){background:var(--pink);--r:-.7deg}.feat .card:nth-child(4n+4){background:var(--lav);--r:.4deg}
+.feat .card h3{font:400 22px/1 var(--display);text-transform:uppercase;margin:8px 0 6px}.feat .card p{margin:0;font-size:14px}
+.err{color:var(--signal);font:12px/1.5 var(--mono);margin-top:6px}.err:empty{display:none}
+.ok-msg{color:var(--emerald);font:12px var(--mono)}
+.note{font:12px var(--mono);color:var(--lemon)}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}.pane>.card,.feat .card{transform:none!important}}
+.login{position:fixed;inset:0;z-index:50;background:var(--desk);overflow-y:auto;padding:max(24px,env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) 40px max(16px,env(safe-area-inset-left,0px))}
+.login-in{max-width:980px;margin:0 auto;display:grid;grid-template-columns:1.1fr 1fr;gap:28px;align-items:start}
+@media(max-width:820px){.login-in{grid-template-columns:1fr}}
+.roles{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:480px){.roles{grid-template-columns:1fr}}
+.role{all:unset;cursor:pointer;display:block;padding:12px 14px;background:var(--c);color:#fff;border-radius:12px 12px 0 0;opacity:.8}
+.role b{display:block;font:400 22px/1 var(--display);text-transform:uppercase;margin-bottom:4px}.role span{font:12px/1.4 var(--mono)}
+.role[data-light]{color:var(--ink)}.role[aria-pressed="true"]{opacity:1;outline:3px solid var(--paper);outline-offset:2px}
+.who{display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:flex-end;margin-top:8px}
+.who .chip{background:var(--paper)}
+.btn.small{padding:5px 9px;font-size:11px;box-shadow:none;border:1px solid var(--paper);background:transparent;color:var(--paper)}
+.locked{opacity:.35!important;pointer-events:none!important}
+.perm-y{color:var(--emerald);font-weight:700}.perm-n{color:var(--signal)}
+</style>
+
+<div class="login" id="login" hidden>
+ <div class="login-in">
+  <div><div class="logo">codencode<b>.my</b></div><h1>Open the<br>Case Files</h1>
+   <p class="sub" style="color:#a29a8c;max-width:46ch">Sign in with your role. Each role sees different drawers: students study and edit their own notes, lecturers curate cases, study-group members review, the builder maintains the app.</p>
+   <p class="sub" style="color:#a29a8c;max-width:46ch">Classroom version: this sign-in is on this device only and uses no password. Use made-up names — never your IC number or real password.</p></div>
+  <form class="card" id="lf" novalidate>
+   <div class="lbl">1 · Choose your role</div>
+   <div class="roles" id="roles"></div>
+   <div class="lbl" style="margin-top:18px">2 · Your name</div>
+   <input id="lname" autocomplete="nickname" placeholder="e.g. Aisyah (student)">
+   <div class="lbl" style="margin-top:12px">3 · Class code <span style="text-transform:none">(optional)</span></div>
+   <input id="lcode" placeholder="e.g. CRIM101-2026">
+   <div class="err" id="lerr" role="alert"></div>
+   <div class="row" style="margin-top:14px"><button class="btn" type="submit">Open archive</button></div>
+  </form>
+ </div>
+</div>
+<div class="wrap">
+<header>
+  <div><div class="logo">codencode<b>.my</b></div><h1>Criminal<br>Case Files</h1><div class="sub">CaseLab Criminology — a student's archive of real cases: summaries, sources, flashcards, quizzes and both sides of the argument.</div></div>
+  <div class="meta-col">Malaysia · UK · US · Italy<br>16 case dossiers<br><span class="note" id="aiState">AI: checking…</span><div class="who" id="who"></div></div>
+</header>
+
+<div class="grid">
+  <aside class="side">
+    <div class="lbl">Case bank</div>
+    <input id="find" placeholder="Search cases or themes" aria-label="Search cases or themes" style="margin-bottom:8px">
+    <div class="cases" id="caseList"></div>
+    <div class="lbl" style="margin-top:14px">Add your own case</div>
+    <input id="newCase" placeholder="e.g. Lindy Chamberlain">
+    <div class="row" style="margin-top:6px"><button class="btn ghost" id="addCase">Add case</button></div>
+    <div class="err" id="caseErr" role="alert"></div>
+  </aside>
+
+  <main>
+    <div class="tabs" role="tablist" id="tabs"></div>
+    <div id="view"></div>
+  </main>
+</div>
+</div>
+
+<script>
+const CASES=[
+["01","Canny Ong murder case","Malaysia","Forensic evidence, victimology, criminal investigation","Canny Ong disappeared after leaving a Kuala Lumpur shopping centre in 2003.","Ahmad Najib Aris convicted of murder and rape; convictions remained after appeals.",false],
+["02","Altantuya Shaariibuu murder case","Malaysia","Circumstantial evidence, abuse of authority, public trust","Murdered in Malaysia in 2006; heavy public attention because of the accused's links to law enforcement.","Former police commandos Azilah Hadri and Sirul Azhar Umar convicted of murder; later proceedings affected sentencing but the murder convictions stayed.",true],
+["03","Nurul Nadirah Dirang case","Malaysia","Missing-person investigation, identification evidence, child protection","Young child disappeared in Johor in 2012.","Muidin Maidin convicted in connection with the murder; conviction and sentence upheld on appeal.",false],
+["04","Noor Suzaily Mukhtar case","Malaysia","Public safety, offender behaviour, forensic evidence","Raped and murdered in 2000 after boarding a bus in Selangor.","Hanafi Mat Hassan convicted of rape and murder; convictions survived appeal.",false],
+["05","Nazrin Hassan death case","Malaysia","Forensic interpretation, circumstantial cases, presumption of innocence","Cradle Fund CEO died in 2018; prosecution turned on cause of death and interpretation of forensic and circumstantial evidence.","Accused acquitted; acquittals upheld by the Federal Court in January 2026. Acquittal does not determine who caused the death.",true],
+["06","Stephen Lawrence murder case","UK","Institutional racism, investigative failures, forensic advances","Black teenager murdered in a racist attack in London, 1993; initial police investigation heavily criticised.","Gary Dobson and David Norris convicted of murder in 2012.",false],
+["07","Central Park Five case","US","False confessions, interrogation practices, wrongful convictions","Five teenagers convicted over a 1989 assault in New York's Central Park.","Convictions vacated in 2002 after another man confessed and DNA supported his account.",false],
+["08","O. J. Simpson criminal trial","US","Reasonable doubt, DNA evidence, police credibility","Tried for the 1994 murders of Nicole Brown Simpson and Ronald Goldman.","Not guilty (1995 criminal trial); a later civil case reached a different outcome under a lower standard of proof.",false],
+["09","Amanda Knox case","Italy","DNA interpretation, interrogation, media bias, appeals","Meredith Kercher murdered in Perugia, 2007; Knox and Sollecito went through convictions and appeals.","Italy's highest court definitively acquitted Knox and Sollecito in 2015; Rudy Guede separately convicted.",false],
+["10","Adnan Syed case","US","Witness reliability, phone records, post-conviction review","Convicted in 2000 of murdering Hae Min Lee (Baltimore, 1999).","Conviction vacated in 2022, reinstated in 2023; later proceedings complicate the position — check the latest court record.",true],
+["11","Ted Bundy criminal cases","US","Behavioural patterns, investigative coordination, limits of profiling","Convicted in Florida of multiple murders in the late 1970s.","Convicted of multiple murders and sentenced to death.",false],
+["12","Casey Anthony trial","US","Circumstantial evidence, media influence, reasonable doubt","Caylee Anthony died in Florida in 2008; 2011 trial with extensive coverage.","Acquitted of murder, manslaughter and child abuse; convicted of giving false information to law enforcement.",false],
+["13","Derek Bentley case","UK","Joint criminal responsibility, youth justice, miscarriages of justice","Convicted over the 1952 killing of a police officer during a burglary attempt.","Executed in 1953; conviction quashed posthumously by the Court of Appeal in 1998.",false],
+["14","Birmingham Six case","UK","Evidence integrity, confession reliability, wrongful convictions","Six men convicted after the 1974 Birmingham pub bombings.","Convictions quashed by the Court of Appeal in 1991.",false],
+["15","Enron criminal prosecutions","US","White-collar crime, corporate culture, accountability","Enron collapsed in 2001 amid extensive accounting fraud.","Jeffrey Skilling convicted; Kenneth Lay's conviction vacated after his death before sentencing.",false],
+["16","Jeffrey Epstein cases","US","Plea bargaining, prosecutorial discretion, victims' rights, deaths in custody, elite power and accountability","Financier investigated in Florida from 2005 over sexual abuse of underage girls; federally charged in New York in 2019 with sex trafficking of minors. Victims include minors — study the justice-system issues, not the abuse details.","2008: pleaded guilty to state charges in Florida under a federal non-prosecution agreement (about 13 months, with work release). 2019: federal trafficking charges; died in jail custody before trial, ruled suicide, so no verdict was reached and charges were dismissed. Ghislaine Maxwell convicted of sex trafficking in 2021 and sentenced to 20 years. Disclosure of investigative records continued in 2025–26 under the Epstein Files Transparency Act.",true]
+].map(c=>({id:c[0],name:c[1],jur:c[2],focus:c[3],overview:c[4],outcome:c[5],check:c[6]}));
+
+const RULES=`You are a criminology study assistant. Ground rules: separate the original verdict from the latest legal outcome, with years. Never present allegations as established facts; an acquittal means the standard of proof was not met, not factual innocence. Do not invent sources, quotations, judgment names, case numbers or dates — say what to verify instead. Handle victims, especially children, with restraint and no graphic detail. Use neutral academic language. If an outcome may have changed, say it needs verifying against court records. Plain text only, no markdown headings or asterisks.`;
+
+const S={store(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}},load(k,d){try{return JSON.parse(localStorage.getItem(k))??d}catch(e){return d}}};
+let custom=S.load("cl_custom",[]); let res=S.load("cl_res",[]);
+let cur=CASES[0], tab="Summary", sample=null;
+const all=()=>[...CASES,...custom];
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const caseText=c=>`Case: ${c.name}${c.jur?` (${c.jur})`:""}. ${c.focus?"Focus: "+c.focus+". ":""}${c.overview?"Overview: "+c.overview+" ":""}${c.outcome?"Recorded outcome: "+c.outcome:""}`;
+
+(async()=>{sample=await window.claude?.use?.("sample")??null;$("#aiState").textContent=sample?"AI: ready":"AI: offline — built-in study mode";render()})();
+
+function renderCases(){
+  const list=all().filter(c=>!q||(c.name+" "+c.focus+" "+c.jur).toLowerCase().includes(q));
+  $("#caseList").innerHTML=(list.length?"":`<p class="sub">No case matches “${esc(q)}”.</p>`)+list.map(c=>`<button class="case" data-id="${c.id}" data-j="${c.jur?"":"own"}" style="--c:${jcol(c)}" aria-current="${c===cur}"><span>${c.id}</span>${esc(c.name)}</button>`).join("");
+  document.querySelectorAll(".case").forEach(b=>b.onclick=()=>{cur=all().find(c=>c.id===b.dataset.id);render()});
+}
+const PII=/\b\d{6}-?\d{2}-?\d{4}\b|\b\d{10,16}\b/;
+const piiMsg="This looks like an IC or bank/card number. CaseLab doesn't store personal ID numbers (PDPA) — remove it to save.";
+let q="";$("#find").oninput=e=>{q=e.target.value.toLowerCase();renderCases()};
+$("#addCase").onclick=()=>{const n=$("#newCase").value.trim(),E=$("#caseErr");E.textContent="";if(!n){E.textContent="Type a case name first.";return}if(n.length<3){E.textContent="Case name needs at least 3 characters.";return}if(all().some(c=>c.name.toLowerCase()===n.toLowerCase())){E.textContent="That case is already in the list.";return}if(PII.test(n)){E.textContent=piiMsg;return}const c={id:"U"+(custom.length+1),name:n,jur:"",focus:"",overview:"",outcome:"",check:true};custom.push(c);S.store("cl_custom",custom);cur=c;$("#newCase").value="";render()};
+
+const TABS=["Summary","Resources","Flashcards","Quiz","Arguments","Progress","Features"];
+const DAY=864e5, GAPS=[0,1,3,7,14,30];
+const srsGet=id=>S.load("cl_srs_"+id,{});
+const cardsFor=c=>S.load("cl_fc_"+c.id,null)||seedCards(c);
+function mastery(c){const st=srsGet(c.id),n=cardsFor(c).length;let known=0,seen=0,due=0;const now=Date.now();
+  cardsFor(c).forEach(([f])=>{const s=st[f];if(s){seen++;if(s.box>=3)known++;if(s.due<=now)due++}else due++});return {n,seen,known,due,pct:n?Math.round(known/n*100):0}}
+function quizStats(id){const l=S.load("cl_scores",[]).filter(x=>!id||x.case===id);const s=l.reduce((a,x)=>a+x.score,0),t=l.reduce((a,x)=>a+x.total,0);return {runs:l.length,pct:t?Math.round(s/t*100):null}}
+const JCOL={Malaysia:"var(--signal)",UK:"var(--cobalt)",US:"var(--violet)",Italy:"var(--emerald)"};const jcol=c=>JCOL[c.jur]||"var(--lemon)";
+const TCOL=["var(--signal)","var(--cobalt)","var(--emerald)","var(--lemon)","var(--violet)","var(--black)","var(--cobalt)","var(--emerald)"];
+function renderTabs(){$("#tabs").innerHTML=TABS.map((t,i)=>`<button class="tab" role="tab" style="--t:${TCOL[i]}" ${TCOL[i].includes("lemon")?"data-light":""} aria-selected="${t===tab}">${t}</button>`).join("");const i=TABS.indexOf(tab);$("#view").style.setProperty("--folder",TCOL[i]);$("#view").toggleAttribute("data-light",TCOL[i].includes("lemon"));
+  document.querySelectorAll(".tab").forEach(b=>b.onclick=()=>{tab=b.textContent;render()})}
+
+async function ask(prompt,el,btn){
+  if(!sample){el.textContent="AI generation needs the page opened in Claude with AI access allowed. Built-in content is shown where available.";return}
+  btn&&(btn.disabled=true);el.textContent="Thinking…";
+  try{await sample(RULES+"\n\n"+prompt,{onText:({text})=>{el.textContent=text}})}
+  catch(e){el.textContent=e.code==="not_granted"?"AI access was not allowed for this page.":"Couldn't generate: "+(e.message||e.code)}
+  btn&&(btn.disabled=false);
+}
+
+function header(){return `<div class="card dossier"><span class="clip" aria-hidden="true"></span><div class="lbl">File ${esc(cur.id)} · ${esc(cur.jur||"Your own case")}</div><h2>${esc(cur.name)}</h2><div class="meta">${cur.jur?`<span class="chip">${esc(cur.jur)}</span>`:""}${cur.focus?cur.focus.split(", ").map(f=>`<span class="chip">${esc(f)}</span>`).join(""):""}${cur.check?`<span class="chip check">verify latest outcome</span>`:""}</div></div>`}
+
+const V={
+Summary(){return header()+`<div class="card"><div class="lbl">Case overview</div><p class="drop">${esc(cur.overview||"Your own case — paste notes below and generate a summary.")}</p><div class="lbl">Final verdict / legal outcome</div><p>${esc(cur.outcome||"—")}</p></div>
+<div class="card"><div class="lbl">Summarise your notes or a reading</div><textarea id="notes" placeholder="Paste lecture notes, a judgment extract or an article…">${esc(S.load("cl_notes_"+cur.id,""))}</textarea>
+<div class="row" style="margin-top:8px"><select id="mode" style="width:auto"><option>7-part assignment structure</option><option>Short revision summary</option><option>Key evidence & procedural issues</option></select><button class="btn" id="go">Summarise</button></div>
+<div class="out" id="out" style="margin-top:12px"></div></div>`},
+Resources(){const mine=res.filter(r=>r.case===cur.id);return header()+`<div class="card"><div class="lbl">Add a study resource</div>
+<div class="row"><input id="rT" placeholder="Title" style="flex:2;min-width:160px"><select id="rK" style="flex:1;min-width:120px"><option>Judgment</option><option>Article</option><option>Lecture</option><option>Book</option><option>Video</option><option>Note</option></select></div>
+<div class="row" style="margin-top:6px"><input id="rU" placeholder="Link or citation" style="flex:1;min-width:200px"><button class="btn" id="rAdd">Add</button></div><div class="err" id="rErr" role="alert"></div></div>
+<div class="card"><div class="lbl">${mine.length} resource${mine.length===1?"":"s"} for this case</div>${mine.map(r=>`<div class="res"><div><span class="chip">${esc(r.kind)}</span> ${esc(r.title)}<br>${/^https?:/.test(r.url)?`<a href="${esc(r.url)}" target="_blank" rel="noopener">${esc(r.url)}</a>`:`<span class="sub">${esc(r.url)}</span>`}</div><div class="row" style="flex-wrap:nowrap"><button class="btn ghost" data-edit="${r.t}">Edit</button><button class="btn ghost" data-del="${r.t}">Remove</button></div></div>`).join("")||`<p class="sub">No resources yet. Start with the court judgment — for Malaysian cases, Federal Court / Court of Appeal judgments; UK: Court of Appeal decisions and inquiry reports; US: published opinions.</p>`}</div>
+<div class="card"><div class="lbl">Suggested source starting points</div><div class="out" id="out">${sample?"":"Court websites and judgments; official inquiry reports; reputable news for timelines, cross-checked against court documents."}</div>${sample?`<div class="row" style="margin-top:8px"><button class="btn ghost" id="go">Suggest what to look up</button></div>`:""}</div>`},
+Flashcards(){return header()+`<div class="card flash" id="fc" tabindex="0"></div><div class="row"><button class="btn ghost" id="miss" hidden>Missed it</button><button class="btn" id="knew" hidden>Knew it</button><span class="sub" id="fcN"></span></div>
+<div class="row"><button class="btn ghost" id="all">Review all anyway</button><button class="btn ghost" id="reset">Reset progress</button><button class="btn ghost" id="gen">Generate more with AI</button></div>
+<p class="sub">Spaced repetition: "Knew it" moves a card up a box (due again in 1, 3, 7, 14, then 30 days). "Missed it" sends it back to box 0 so it returns this session. A card in box 3+ counts as known.</p>`},
+Progress(){const rows=all().map(c=>({c,m:mastery(c),q:quizStats(c.id)}));const themes={};
+  rows.forEach(r=>(r.c.focus||"Unsorted").split(", ").forEach(t=>{t=t.trim();const k=t.charAt(0).toUpperCase()+t.slice(1);(themes[k]??=[]).push(r)}));
+  const bar=p=>`<div style="background:var(--line);border-radius:3px;height:6px;min-width:60px"><div style="width:${p}%;height:6px;border-radius:3px;background:${p>=70?"var(--accent)":p>=40?"var(--warn)":"var(--bad)"}"></div></div>`;
+  const tq=quizStats(),totDue=rows.reduce((a,r)=>a+r.m.due,0),touched=rows.filter(r=>r.m.seen||r.q.runs);
+  const weak=Object.entries(themes).map(([t,rs])=>{const ms=rs.filter(r=>r.m.seen||r.q.runs);if(!ms.length)return null;const p=Math.round(ms.reduce((a,r)=>a+(r.q.pct==null?r.m.pct:(r.m.pct+r.q.pct)/2),0)/ms.length);return [t,p,ms.length]}).filter(Boolean).sort((a,b)=>a[1]-b[1]);
+  return `<div class="card"><h2>Your progress</h2><div class="meta"><span class="chip">${touched.length} / ${rows.length} cases studied</span><span class="chip">${totDue} cards due</span><span class="chip">Quiz average ${tq.pct==null?"—":tq.pct+"%"} over ${tq.runs} quiz${tq.runs===1?"":"zes"}</span></div></div>
+  <div class="card"><div class="lbl">Weakest themes first</div>${weak.length?`<div class="scroll"><table><tr><th>Theme</th><th>Score</th><th></th><th>Cases</th></tr>${weak.map(([t,p,n])=>`<tr><td>${esc(t)}</td><td style="font-variant-numeric:tabular-nums">${p}%</td><td>${bar(p)}</td><td>${n}</td></tr>`).join("")}</table></div>`:`<p class="sub">Review some flashcards or finish a quiz and your weak themes appear here.</p>`}</div>
+  <div class="card"><div class="lbl">By case</div><div class="scroll"><table><tr><th>Case</th><th>Cards known</th><th>Due</th><th>Quiz</th><th></th></tr>${rows.map(r=>`<tr><td><button class="case" style="padding:0" data-go="${r.c.id}">${esc(r.c.name)}</button></td><td style="font-variant-numeric:tabular-nums">${r.m.known}/${r.m.n}</td><td style="font-variant-numeric:tabular-nums">${r.m.due}</td><td style="font-variant-numeric:tabular-nums">${r.q.pct==null?"—":r.q.pct+"%"}</td><td>${bar(r.q.pct==null?r.m.pct:Math.round((r.m.pct+r.q.pct)/2))}</td></tr>`).join("")}</table></div></div>
+  <div class="card"><div class="lbl">Backup (data safety)</div><p class="sub">Copy all your notes, resources, flashcard progress and quiz scores, then paste them back on another browser or after clearing data.</p>
+  <div class="row"><button class="btn ghost" id="bk">Copy backup</button><button class="btn ghost" id="rs">Restore from pasted backup</button></div><textarea id="bkT" placeholder="Backup text appears here, or paste one to restore" style="margin-top:8px;min-height:90px"></textarea><div id="bkM" class="ok-msg" role="status"></div></div>`},
+Quiz(){return header()+`<div class="card" id="qz"></div><div class="row"><button class="btn" id="gen">Generate a fresh 5-question quiz</button></div>`},
+Arguments(){return header()+`<div class="card"><div class="lbl">Argument ladder · prosecution / plaintiff vs defence</div>
+<div class="row"><select id="side" style="width:auto"><option>Criminal (prosecution)</option><option>Civil (plaintiff)</option></select><select id="n" style="width:auto"><option>3 arguments</option><option>4 arguments</option><option>5 arguments</option></select><button class="btn" id="go">Build ladder</button><button class="btn ghost" id="moot">Mock-trial speaking notes</button></div>
+<p class="sub">Each round shows the claim, the best counter-argument, and a direct rebuttal. Arguments not taken from the trial record are labelled "likely argument" — don't cite those as testimony.</p>
+<div class="out" id="out"></div></div>
+<div class="card"><div class="lbl">Counter-check one point</div><input id="pt" placeholder="Paste one point, e.g. 'The confession proves guilt'"><div class="row" style="margin-top:6px"><button class="btn ghost" id="ctr">Give me the strongest counter + rebuttal</button></div><div class="out" id="out2" style="margin-top:10px"></div></div>`},
+Features(){return `<div class="card"><h2>Feature roadmap for this app</h2><p class="sub">Built now: case bank, AI summaries, resource organiser, flashcards, quizzes, argument ladders. Next ideas, simplest first:</p></div><div class="feat">${FEATS.map(f=>`<div class="card"><span class="chip">${f[0]}</span><h3 style="margin-top:6px">${f[1]}</h3><p>${f[2]}</p></div>`).join("")}</div>
+<div class="card"><div class="lbl">Ask for more ideas</div><input id="fq" placeholder="e.g. features for group revision before finals"><div class="row" style="margin-top:6px"><button class="btn" id="go">Suggest features</button></div><div class="out" id="out" style="margin-top:10px"></div></div>`}
+};
+const FEATS=[["Easy","Spaced-repetition flashcards","Cards you miss come back sooner; cards you know fade out."],["Easy","Case comparison table","Pick 2–4 cases and see jurisdiction, evidence type, core failure and outcome side by side."],["Easy","Theory matcher","Type a theme like 'false confessions' and get 2–4 fitting cases with where each fits and doesn't."],["Easy","Verify-before-submitting list","Auto-list of dates and outcomes to confirm against court records for each assignment."],["Medium","Assignment worksheet export","Export the 7-part structure with a 'Your conclusion' line as a Word doc."],["Medium","Timeline builder","Arrest → trial → appeals → later rulings on one line per case."],["Medium","Mock-trial timer","60-second opening, cross-exam questions and closing with a countdown."],["Medium","Progress dashboard","Quiz scores per case and per theme so you see weak topics."],["Advanced","Group study room","Classmates join the same case and split prosecution / defence live."],["Advanced","PDF reader","Upload a judgment PDF and get summary, key holdings and quiz questions from it."]];
+
+const EXTRA={"16":[["What was the 2008 non-prosecution agreement (NPA)?","A federal deal in Florida: Epstein pleaded guilty to state charges and federal prosecutors agreed not to charge him or named and unnamed co-conspirators. Widely criticised as lenient."],["Why does the Crime Victims' Rights Act (CVRA) matter here?","Victims argued prosecutors negotiated the NPA without consulting or informing them. A 2019 federal district ruling found the CVRA had been violated; an appeals court later held the victims had no remedy under it. Verify the court history before citing."],["Why is there no verdict in the 2019 case?","Epstein died in federal custody in August 2019 before trial; the death was ruled suicide and the indictment was dismissed. Death abates prosecution — it is not an acquittal or a conviction."],["What does the case show about deaths in custody?","Questions about supervision failures at the Metropolitan Correctional Center led to inquiries into custodial procedure (later DOJ Inspector General review). Verify specific findings."],["Who was prosecuted after Epstein's death?","Ghislaine Maxwell — convicted in 2021 of sex trafficking and related offences; sentenced to 20 years. Check the status of any further appeals."],["Which criminology theories fit?","Elite / white-collar deviance and differential power in the justice system; routine activity theory (targeting vulnerable victims); critiques of plea bargaining and prosecutorial discretion."],["Caution: being named in Epstein files means what?","Nothing by itself. Appearing in contacts, flight logs or released documents is not evidence of a crime. Do not present allegations about named people as facts."]]};
+function seedCards(c){return [...(EXTRA[c.id]||[]),[`Where and when: ${c.name}?`,`${c.jur||"—"}. ${c.overview}`],[`What was the final legal outcome?`,c.outcome],[`Which criminology themes does it illustrate?`,c.focus],[`Original verdict vs latest outcome — why separate them?`,`Convictions can be appealed, vacated, reinstated or quashed. ${c.check?"This case has developments to verify.":"Check appeals before stating it as final."}`]].filter(x=>x[1])}
+function seedQuiz(c){const others=CASES.filter(x=>x!==c);const pick=k=>others.sort(()=>Math.random()-.5).slice(0,3).map(x=>x[k]);
+  return [{q:`Which outcome matches ${c.name}?`,a:c.outcome,o:[c.outcome,...pick("outcome")]},{q:`Which focus area best fits ${c.name}?`,a:c.focus,o:[c.focus,...pick("focus")]},{q:`Which jurisdiction is ${c.name} from?`,a:c.jur,o:[...new Set([c.jur,"Malaysia","UK","US","Italy"])].slice(0,4)}].filter(x=>x.a).map(x=>({...x,o:x.o.sort(()=>Math.random()-.5),e:"From the case-bank record. Verify against court records before citing."}))}
+
+let cards=[],ci=0,flip=false,quiz=[];
+function bind(){
+  const go=$("#go"),out=$("#out");
+  if(tab==="Summary"){$("#notes").insertAdjacentHTML("afterend",`<div class="err" id="nErr" role="alert"></div>`);$("#notes").oninput=e=>{const bad=PII.test(e.target.value);$("#nErr").textContent=bad?piiMsg+" (Notes not saved.)":"";if(!bad)S.store("cl_notes_"+cur.id,e.target.value)};
+    go.onclick=()=>ask(`${caseText(cur)}\n\nStudent notes:\n${$("#notes").value||"(none)"}\n\nWrite a ${$("#mode").value}. For the 7-part structure use: 1 Case background, 2 Investigation, 3 Criminological analysis (named theory only where it fits), 4 Court proceedings, 5 Final verdict, 6 Evaluation, 7 References to look up. End with "Verify before submitting:" and specific facts to confirm.`,out,go)}
+  if(tab==="Resources"){let editing=null;$("#rAdd").onclick=()=>{const t=$("#rT").value.trim(),u=$("#rU").value.trim(),E=$("#rErr");E.textContent="";if(!t){E.textContent="Add a title — e.g. 'Federal Court judgment, 2026'.";return}if(u&&/^https?:/i.test(u)===false&&/^www\./i.test(u)){E.textContent="Start links with https:// so they open.";return}if(PII.test(t+" "+u)){E.textContent=piiMsg;return}
+      if(editing){Object.assign(res.find(r=>r.t==editing),{title:t,kind:$("#rK").value,url:u})}else res.push({case:cur.id,title:t,kind:$("#rK").value,url:u,t:Date.now()});S.store("cl_res",res);render()};
+    document.querySelectorAll("[data-edit]").forEach(b=>b.onclick=()=>{const r=res.find(x=>x.t==b.dataset.edit);editing=r.t;$("#rT").value=r.title;$("#rK").value=r.kind;$("#rU").value=r.url;$("#rAdd").textContent="Save changes";$("#rT").focus()});
+    document.querySelectorAll("[data-del]").forEach(b=>b.onclick=()=>{res=res.filter(r=>r.t!=b.dataset.del);S.store("cl_res",res);render()});
+    go&&(go.onclick=()=>ask(`${caseText(cur)}\nList the types of primary and secondary sources a student should look up for this case (courts, inquiry reports, archives), what each would establish, and search terms to use. Do not invent specific citations or case numbers.`,out,go))}
+  if(tab==="Flashcards"){cards=cardsFor(cur);flip=false;let st=srsGet(cur.id),queue=[],cram=false;
+    const build=()=>{const now=Date.now();queue=cards.map((c,i)=>i).filter(i=>cram||!st[cards[i][0]]||st[cards[i][0]].due<=now).sort((a,b)=>(st[cards[a][0]]?.box??-1)-(st[cards[b][0]]?.box??-1));ci=0};
+    const show=()=>{const fc=$("#fc");if(!queue.length){fc.className="card flash back";const nxt=Math.min(...cards.map(c=>st[c[0]]?.due??Infinity));fc.textContent=`All caught up. Next card due ${isFinite(nxt)?new Date(nxt).toLocaleDateString():"—"}.`;$("#miss").hidden=$("#knew").hidden=true;$("#fcN").textContent=`${mastery(cur).known}/${cards.length} known`;return}
+      const c=cards[queue[ci]],b=st[c[0]]?.box??0;fc.className="card flash"+(flip?" back":"");fc.textContent=c[flip?1:0];$("#miss").hidden=$("#knew").hidden=!flip;$("#fcN").textContent=`${queue.length} due · box ${b} · ${flip?"how did you do?":"tap card to flip"}`};
+    const grade=ok=>{const f=cards[queue[ci]][0],s=st[f]||{box:0};s.box=ok?Math.min(s.box+1,5):0;s.due=Date.now()+GAPS[s.box]*DAY;st[f]=s;S.store("cl_srs_"+cur.id,st);
+      const i=queue.splice(ci,1)[0];if(!ok)queue.push(i);if(ci>=queue.length)ci=0;flip=false;show()};
+    $("#fc").onclick=$("#fc").onkeydown=e=>{if(e.type==="keydown"&&e.key!==" "&&e.key!=="Enter")return;e.preventDefault?.();if(!queue.length)return;flip=!flip;show()};
+    $("#miss").onclick=()=>grade(false);$("#knew").onclick=()=>grade(true);
+    $("#all").onclick=()=>{cram=true;build();flip=false;show()};$("#reset").onclick=()=>{st={};S.store("cl_srs_"+cur.id,st);cram=false;build();flip=false;show()};build();
+    $("#gen").onclick=async()=>{if(!sample){$("#fcN").textContent="AI not available — using built-in cards";return}const b=$("#gen");b.disabled=true;$("#fcN").textContent="Generating…";
+      try{const r=await sample.json(RULES+`\n${caseText(cur)}\nMake 8 flashcards mixing recall and application (evidence-type, procedural issue, theory). Return JSON array of [front, back].`);if(Array.isArray(r)&&r.length){cards=[...seedCards(cur),...r];S.store("cl_fc_"+cur.id,cards);flip=false;build()}}catch(e){}b.disabled=false;show()};show()}
+  if(tab==="Progress"){const keys=()=>{const o={};try{for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(k.startsWith("cl_"))o[k]=localStorage.getItem(k)}}catch(e){}return o};
+    $("#bk").onclick=()=>{const t=JSON.stringify({caselab:1,data:keys()});$("#bkT").value=t;navigator.clipboard?.writeText(t).then(()=>$("#bkM").textContent="Backup copied.",()=>{$("#bkT").select();$("#bkM").textContent="Backup shown below — select and copy it."})};
+    $("#rs").onclick=()=>{try{const o=JSON.parse($("#bkT").value);if(!o.caselab)throw 0;Object.entries(o.data).forEach(([k,v])=>localStorage.setItem(k,v));custom=S.load("cl_custom",[]);res=S.load("cl_res",[]);$("#bkM").textContent="Restored.";setTimeout(render,600)}catch(e){$("#bkM").textContent="";$("#bkT").insertAdjacentHTML("afterend",`<div class="err">That isn't a CaseLab backup. Paste the full text from Copy backup.</div>`)}}}
+  if(tab==="Progress")document.querySelectorAll("[data-go]").forEach(b=>b.onclick=()=>{cur=all().find(c=>c.id===b.dataset.go);tab="Flashcards";render()});
+  if(tab==="Quiz"){quiz=seedQuiz(cur);const draw=()=>{let score=0,done=0;$("#qz").innerHTML=quiz.map((q,i)=>`<div style="margin-bottom:14px"><b>${i+1}. ${esc(q.q)}</b>${q.o.map(o=>`<button class="opt" data-q="${i}">${esc(o)}</button>`).join("")}<div class="sub" id="e${i}"></div></div>`).join("")+`<div class="lbl" id="sc"></div>`;
+      document.querySelectorAll(".opt").forEach(b=>b.onclick=()=>{const i=+b.dataset.q,q=quiz[i];if(q.done)return;q.done=1;done++;const ok=b.textContent===q.a;if(ok)score++;b.classList.add(ok?"ok":"no");
+        document.querySelectorAll(`.opt[data-q="${i}"]`).forEach(x=>x.textContent===q.a&&x.classList.add("ok"));$("#e"+i).textContent=q.e;$("#sc").textContent=`Score ${score} / ${done}`;
+        if(done===quiz.length){const l=S.load("cl_scores",[]);l.push({case:cur.id,score,total:done,t:Date.now()});S.store("cl_scores",l);$("#sc").textContent+=" · saved to Progress"}})};draw();
+    $("#gen").onclick=async()=>{if(!sample)return;const b=$("#gen");b.disabled=true;$("#qz").textContent="Generating…";
+      try{const r=await sample.json(RULES+`\n${caseText(cur)}\nWrite 5 multiple-choice questions mixing recall and application. Return JSON array of {q, o:[4 options], a: exact correct option text, e: explanation}.`);if(Array.isArray(r)&&r.length)quiz=r}catch(e){}b.disabled=false;draw()}}
+  if(tab==="Arguments"){
+    go.onclick=()=>{const civ=$("#side").value.startsWith("Civil");ask(`${caseText(cur)}\nBuild an argument ladder with ${$("#n").value}. Use "${civ?"Plaintiff":"Prosecution"}"${civ?" (civil, balance of probabilities)":" (criminal, beyond reasonable doubt)"}. For each round: ${civ?"Plaintiff":"Prosecution"} claim + evidence type relied on → Defence counter-argument → Rebuttal → Defence reply. Label anything not from the trial record "likely argument". Keep both sides equal in effort. If the case ended in exoneration or quashing, present the prosecution's historical case and show why it collapsed. Then: What the court actually found; Strongest and weakest point for each side; Standard of proof reminder; one Evaluation question. End with "Verify before submitting:".`,out,go)};
+    $("#moot").onclick=()=>ask(`${caseText(cur)}\nTurn this into mock-trial speaking notes for both sides: a 60-second opening, 4 cross-examination questions, a 60-second closing. Label likely arguments.`,out,$("#moot"));
+    $("#ctr").onclick=()=>ask(`${caseText(cur)}\nA student argues: "${$("#pt").value}". Give the strongest counter-argument from the opposing side, then a direct rebuttal to that counter, then which standard of proof matters and why. Label likely arguments.`,$("#out2"),$("#ctr"))}
+  if(tab==="Features"){go.onclick=()=>ask(`The app is a criminology study tool with: case bank, AI summaries, resource organiser, flashcards, quizzes, prosecution vs defence argument ladders. Suggest 6 simple, buildable features for: ${$("#fq").value||"a student revising for exams"}. For each: name, what it does, difficulty (Easy/Medium/Advanced).`,out,go)}
+}
+function render(){renderCases();renderTabs();$("#view").innerHTML=`<div class="folder-cap"><span>${tab==="Features"||tab==="Progress"?"Archive":"File "+esc(cur.id)} / ${tab}</span><span>${esc(cur.focus?cur.focus.split(", ")[0]:"Criminology")}</span></div><div class="pane">${V[tab]()}</div>`;bind()}
+const ROLES={
+ student:{name:"Student",col:"var(--signal)",desc:"Primary user · studies cases daily",perm:{view:1,add:1,edit:1,del:1,ai:1,backup:1}},
+ lecturer:{name:"Lecturer",col:"var(--cobalt)",desc:"Decision-maker · approves content",perm:{view:1,add:1,edit:1,del:0,ai:1,backup:0}},
+ peer:{name:"Study group",col:"var(--emerald)",desc:"Secondary user · reviews & quizzes",perm:{view:1,add:0,edit:0,del:0,ai:0,backup:0}},
+ builder:{name:"Builder",col:"var(--lemon)",desc:"You + Claude · builds and fixes",perm:{view:1,add:1,edit:1,del:1,ai:1,backup:1}}};
+let me=S.load("cl_session",null),pick="student";
+const can=k=>!!(me&&ROLES[me.role].perm[k]);
+function showLogin(){$("#login").hidden=false;$("#roles").innerHTML=Object.entries(ROLES).map(([k,r])=>`<button type="button" class="role" data-r="${k}" style="--c:${r.col}" ${k==="builder"?"data-light":""} aria-pressed="${k===pick}"><b>${r.name}</b><span>${r.desc}</span></button>`).join("");
+ document.querySelectorAll(".role").forEach(b=>b.onclick=()=>{pick=b.dataset.r;showLogin()})}
+$("#lf").onsubmit=e=>{e.preventDefault();const n=$("#lname").value.trim(),E=$("#lerr");E.textContent="";
+ if(n.length<2){E.textContent="Enter a name of at least 2 characters.";return}if(PII.test(n+" "+$("#lcode").value)){E.textContent=piiMsg;return}
+ me={name:n,role:pick,code:$("#lcode").value.trim(),t:Date.now()};S.store("cl_session",me);$("#login").hidden=true;if(!TABS.includes(tab)||!visibleTabs().includes(tab))tab="Summary";render()};
+const visibleTabs=()=>TABS.filter(t=>t!=="Features"||can("add"));
+function applyRole(){if(!me)return;const r=ROLES[me.role];
+ $("#who").innerHTML=`<span class="chip">${esc(me.name)} · ${r.name}${me.code?" · "+esc(me.code):""}</span><button class="btn small" id="out">Sign out</button>`;
+ $("#out").onclick=()=>{try{localStorage.removeItem("cl_session")}catch(e){}me=null;showLogin()};
+ document.querySelectorAll(".tab").forEach(b=>{if(!visibleTabs().includes(b.textContent))b.remove()});
+ const lock=(sel,ok,why)=>document.querySelectorAll(sel).forEach(el=>{if(!ok){el.classList.add("locked");el.title=why;el.setAttribute("aria-disabled","true")}});
+ lock("#newCase,#addCase,#rT,#rK,#rU,#rAdd",can("add"),"Your role can view only");
+ lock("[data-edit],#notes",can("edit"),"Your role can't edit");
+ lock("[data-del],#reset",can("del"),"Your role can't delete");
+ lock("#go,#gen,#ctr,#moot,#pt",can("ai"),"AI tools are for students, lecturers and the builder");
+ lock("#bk,#rs,#bkT",can("backup"),"Backups are for the data owner");
+ if(!can("ai")&&$("#aiState"))$("#aiState").textContent="AI: not available for your role"}
+const _render=render;render=function(){_render();applyRole()};
+if(me)render();else{render();showLogin()}
+</script>
