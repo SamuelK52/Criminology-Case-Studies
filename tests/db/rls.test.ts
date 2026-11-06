@@ -32,8 +32,39 @@ describe("seed", () => {
   });
   it("is safe to re-run", async () => {
     const { readFileSync } = await import("node:fs");
-    await t.db.exec(readFileSync("supabase/seed.sql", "utf8"));
+    await t.db.exec(readFileSync("db/seed.sql", "utf8"));
     expect((await t.q("select 1 from cases")).length).toBe(16);
+  });
+  it("migrations are safe to re-run (pre-deploy runs them on every deploy)", async () => {
+    const { readFileSync, readdirSync } = await import("node:fs");
+    for (const f of readdirSync("db/migrations").sort()) await t.db.exec(readFileSync(`db/migrations/${f}`, "utf8"));
+    expect((await t.q("select 1 from cases")).length).toBe(16);
+  });
+});
+
+describe("credentials & sessions", () => {
+  it("app role cannot read users or sessions directly", async () => {
+    await expect(t.as(student, () => t.q("select * from users"))).rejects.toThrow(/permission denied/);
+    await expect(t.as(student, () => t.q("select * from sessions"))).rejects.toThrow(/permission denied/);
+  });
+  it("rejects a duplicate email and an unknown class code at sign-up", async () => {
+    await expect(t.signUp({ display_name: "Aisyah" })).rejects.toThrow(/already exists/);
+    await expect(t.signUp({ display_name: "Zed", class_code: "NOPE-0000" })).rejects.toThrow(/No class/);
+  });
+  it("login lookup, session create / resolve / delete", async () => {
+    const [login] = await t.as(null, () => t.q<{ id: string }>("select * from get_login('AISYAH@test.local')"));
+    expect(login.id).toBe(student);
+    await t.as(null, () => t.q("select create_session($1, 'tok-hash-1', 30)", [student]));
+    const [r] = await t.as(null, () => t.q<{ uid: string }>("select resolve_session('tok-hash-1') uid"));
+    expect(r.uid).toBe(student);
+    await t.as(null, () => t.q("select delete_session('tok-hash-1')"));
+    const [gone] = await t.as(null, () => t.q<{ uid: string | null }>("select resolve_session('tok-hash-1') uid"));
+    expect(gone.uid).toBeNull();
+  });
+  it("expired sessions don't resolve", async () => {
+    await t.q("insert into sessions (token_hash, user_id, expires_at) values ('old', $1, now() - interval '1 minute')", [student]);
+    const [r] = await t.as(null, () => t.q<{ uid: string | null }>("select resolve_session('old') uid"));
+    expect(r.uid).toBeNull();
   });
 });
 
@@ -57,7 +88,7 @@ describe("sign-up", () => {
 });
 
 describe("cases", () => {
-  it("anon can read the shared bank (Milestone 1 case list)", async () => {
+  it("signed-out visitors can read the shared bank (Milestone 1 case list)", async () => {
     const rows = await t.as(null, () => t.q("select code from cases"));
     expect(rows).toHaveLength(16);
   });

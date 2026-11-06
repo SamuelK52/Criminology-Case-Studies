@@ -12,11 +12,8 @@ export type CaseRow = {
   needs_verify: boolean;
   owner_id: string | null;
   class_id: string | null;
-  updated_at: string;
+  updated_at: Date;
 };
-
-export const CASE_COLUMNS =
-  "id, code, name, jurisdiction, focus, overview, original_verdict, latest_outcome, needs_verify, owner_id, class_id, updated_at";
 
 /** Index-card stripe colour per jurisdiction. User cases are lemon (dark text). */
 const JURISDICTION_COLOUR: Record<string, string> = {

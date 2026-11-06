@@ -110,3 +110,5 @@ Tailwind with the prototype's tokens as CSS variables (`--desk`, `--paper`, `--c
 8. **Polish & deploy:** 400px check, contrast, error states, Vercel deploy, final FR check-off table. *Test:* every NFR row.
 
 Each milestone ends with a git commit and a "how to test" list.
+
+> **Superseded in part (2026-11-06):** the project now uses plain PostgreSQL on Railway instead of Supabase, with its own auth and hosting on Railway. See DECISIONS.md #14-#18.

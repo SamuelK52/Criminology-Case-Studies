@@ -1,54 +1,44 @@
-// Runs the real migrations + seed inside PGlite (Postgres compiled to WASM),
-// with a minimal stand-in for Supabase's auth schema and API roles.
+// Runs the real migrations + seed inside PGlite (PostgreSQL compiled to WASM).
+// Queries made through `as()` run as the non-superuser app role `caselab_app`,
+// exactly like the web app, so Row Level Security applies.
 import { PGlite } from "@electric-sql/pglite";
 import { readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 
-const root = join(__dirname, "..", "..", "supabase");
-
-const AUTH_STUB = `
-  create role anon nologin;
-  create role authenticated nologin;
-  create schema auth;
-  create table auth.users (
-    id uuid primary key default gen_random_uuid(),
-    email text,
-    raw_user_meta_data jsonb not null default '{}'
-  );
-  create function auth.uid() returns uuid language sql stable as
-    $$ select nullif(current_setting('request.jwt.claim.sub', true), '')::uuid $$;
-  grant usage on schema auth to anon, authenticated;
-  grant execute on function auth.uid() to anon, authenticated;
-`;
+const root = join(__dirname, "..", "..", "db");
 
 export async function makeDb() {
   const db = new PGlite();
-  await db.exec(AUTH_STUB);
   const migrations = readdirSync(join(root, "migrations")).filter((f) => f.endsWith(".sql")).sort();
   for (const f of migrations) await db.exec(readFileSync(join(root, "migrations", f), "utf8"));
   await db.exec(readFileSync(join(root, "seed.sql"), "utf8"));
 
-  /** Create an auth user the way Supabase sign-up does (fires handle_new_user). */
-  async function signUp(meta: Record<string, string>) {
-    const r = await db.query<{ id: string }>(
-      "insert into auth.users (email, raw_user_meta_data) values ($1, $2) returning id",
-      [`${meta.display_name}@test.local`, JSON.stringify(meta)],
-    );
-    return r.rows[0].id;
-  }
-
-  /** Run fn as an API role. uid null = anon. */
+  /** Run fn as the app role. uid null = signed out. */
   async function as<T>(uid: string | null, fn: () => Promise<T>): Promise<T> {
-    await db.exec(`select set_config('request.jwt.claim.sub', '${uid ?? ""}', false); set role ${uid ? "authenticated" : "anon"};`);
+    await db.exec(`select set_config('app.user_id', '${uid ?? ""}', false); set role caselab_app;`);
     try {
       return await fn();
     } finally {
-      await db.exec(`reset role; select set_config('request.jwt.claim.sub', '', false);`);
+      await db.exec(`reset role; select set_config('app.user_id', '', false);`);
     }
   }
 
   const q = async <T = Record<string, unknown>>(sql: string, params: unknown[] = []) =>
     (await db.query<T>(sql, params)).rows;
+
+  /** Sign up through create_user(), as the app does. */
+  async function signUp(meta: { display_name: string; requested_role?: string; class_code?: string }) {
+    const [r] = await as(null, () =>
+      q<{ id: string }>("select create_user($1, $2, $3, $4, $5) as id", [
+        `${meta.display_name.replace(/\W/g, "").toLowerCase()}@test.local`,
+        "scrypt$test$hash-placeholder-0123456789",
+        meta.display_name,
+        meta.requested_role ?? "student",
+        meta.class_code ?? null,
+      ]),
+    );
+    return r.id;
+  }
 
   return { db, signUp, as, q };
 }

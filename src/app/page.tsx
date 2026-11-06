@@ -4,7 +4,7 @@ import { Wordmark } from "@/components/Wordmark";
 import { loadCases } from "@/lib/cases";
 import { caseColour, isLightColour } from "@/lib/types";
 
-// Milestone 1: prove the case bank loads from Supabase. Routing, auth and tabs arrive in later milestones.
+// Milestone 1: prove the case bank loads from Postgres. Routing, auth and tabs arrive in later milestones.
 // The shell prerenders; anything that reads the session/database streams in behind <Suspense>.
 export default function Home() {
   return (

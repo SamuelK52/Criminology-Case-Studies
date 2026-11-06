@@ -1,9 +1,25 @@
--- CaseLab Criminology — schema
--- Tables, constraints and triggers. Row Level Security lives in the next migration.
+-- CaseLab Criminology — schema (plain PostgreSQL 15+, e.g. Railway Postgres)
+-- Tables, constraints and triggers. Row Level Security lives in 0002_rls.sql.
+--
+-- How identity reaches the database:
+--   The web app connects as the role `caselab_app` — NOT a superuser and NOT the table owner,
+--   so Row Level Security applies to every query it runs.
+--   Each request runs in a transaction that first does
+--     select set_config('app.user_id', '<uuid>', true)   -- true = this transaction only
+--   and every policy reads that through public.current_user_id(). No user id = signed out.
+
+do $$ begin
+  create role caselab_app nologin;   -- scripts/db-setup.mjs gives it LOGIN + a password
+exception when duplicate_object then null; end $$;
 
 do $$ begin
   create type public.app_role as enum ('student', 'lecturer', 'peer', 'builder');
 exception when duplicate_object then null; end $$;
+
+create or replace function public.current_user_id()
+returns uuid language sql stable as $$
+  select nullif(current_setting('app.user_id', true), '')::uuid
+$$;
 
 -- ---------------------------------------------------------------
 -- PDPA guard: refuse text that looks like a Malaysian IC number
@@ -21,22 +37,44 @@ returns trigger language plpgsql as $$
 begin new.updated_at := now(); return new; end $$;
 
 -- ---------------------------------------------------------------
+-- users + sessions (credentials)
+-- The app role has NO direct access to these tables; it goes through the
+-- security-definer functions in 0002_rls.sql. Passwords are hashed in the app
+-- (scrypt) before they reach the database; session cookies are stored as sha256.
+-- ---------------------------------------------------------------
+create table if not exists public.users (
+  id            uuid primary key default gen_random_uuid(),
+  email         text not null check (email ~ '^[^@[:space:]]+@[^@[:space:]]+\.[^@[:space:]]+$' and char_length(email) <= 254),
+  password_hash text not null check (char_length(password_hash) between 20 and 500),
+  created_at    timestamptz not null default now()
+);
+create unique index if not exists users_email_key on public.users (lower(email));
+
+create table if not exists public.sessions (
+  token_hash text primary key,
+  user_id    uuid not null references public.users(id) on delete cascade,
+  created_at timestamptz not null default now(),
+  expires_at timestamptz not null
+);
+create index if not exists sessions_user_idx on public.sessions (user_id);
+
+-- ---------------------------------------------------------------
 -- classes
 -- ---------------------------------------------------------------
 create table if not exists public.classes (
   id          uuid primary key default gen_random_uuid(),
   name        text not null check (char_length(btrim(name)) between 2 and 80),
   join_code   text not null check (join_code ~ '^[A-Za-z0-9-]{4,32}$'),
-  lecturer_id uuid not null references auth.users(id) on delete cascade,
+  lecturer_id uuid not null references public.users(id) on delete cascade,
   created_at  timestamptz not null default now()
 );
 create unique index if not exists classes_join_code_key on public.classes (upper(join_code));
 
 -- ---------------------------------------------------------------
--- profiles (one per auth user, created by trigger on sign-up)
+-- profiles (one per user, created by create_user())
 -- ---------------------------------------------------------------
 create table if not exists public.profiles (
-  id             uuid primary key references auth.users(id) on delete cascade,
+  id             uuid primary key references public.users(id) on delete cascade,
   display_name   text not null check (char_length(display_name) between 2 and 60 and not public.has_pii(display_name)),
   role           public.app_role not null default 'student',
   requested_role public.app_role,
@@ -63,11 +101,11 @@ create table if not exists public.cases (
   original_verdict text check (not public.has_pii(original_verdict)),
   latest_outcome   text check (not public.has_pii(latest_outcome)),
   needs_verify     boolean not null default false,
-  owner_id         uuid references auth.users(id) on delete cascade,
+  owner_id         uuid references public.users(id) on delete cascade,
   class_id         uuid references public.classes(id) on delete cascade,
   created_at       timestamptz not null default now(),
   updated_at       timestamptz not null default now(),
-  updated_by       uuid references auth.users(id) on delete set null
+  updated_by       uuid references public.users(id) on delete set null
 );
 create unique index if not exists cases_code_key on public.cases (code);
 -- Duplicate names: unique within the shared bank, and within each owner's own cases.
@@ -82,7 +120,7 @@ create index if not exists cases_class_idx on public.cases (class_id);
 create table if not exists public.notes (
   id         uuid primary key default gen_random_uuid(),
   case_id    uuid not null references public.cases(id) on delete cascade,
-  user_id    uuid not null default auth.uid() references auth.users(id) on delete cascade,
+  user_id    uuid not null default public.current_user_id() references public.users(id) on delete cascade,
   body       text not null default '' check (char_length(body) <= 50000 and not public.has_pii(body)),
   updated_at timestamptz not null default now(),
   unique (case_id, user_id)
@@ -94,7 +132,7 @@ create table if not exists public.notes (
 create table if not exists public.resources (
   id         uuid primary key default gen_random_uuid(),
   case_id    uuid not null references public.cases(id) on delete cascade,
-  user_id    uuid not null default auth.uid() references auth.users(id) on delete cascade,
+  user_id    uuid not null default public.current_user_id() references public.users(id) on delete cascade,
   shared     boolean not null default false,
   class_id   uuid references public.classes(id) on delete cascade,
   title      text not null check (char_length(btrim(title)) between 1 and 200 and not public.has_pii(title)),
@@ -116,7 +154,7 @@ create index if not exists resources_user_idx on public.resources (user_id);
 create table if not exists public.flashcards (
   id         uuid primary key default gen_random_uuid(),
   case_id    uuid not null references public.cases(id) on delete cascade,
-  user_id    uuid references auth.users(id) on delete cascade,
+  user_id    uuid references public.users(id) on delete cascade,
   front      text not null check (char_length(front) between 1 and 500),
   back       text not null check (char_length(back) between 1 and 2000),
   source     text not null check (source in ('derived', 'seed', 'lecturer', 'ai')),
@@ -132,7 +170,7 @@ create unique index if not exists flashcards_derived_slot_key
 -- card_progress (spaced repetition: box 0–5)
 -- ---------------------------------------------------------------
 create table if not exists public.card_progress (
-  user_id      uuid not null default auth.uid() references auth.users(id) on delete cascade,
+  user_id      uuid not null default public.current_user_id() references public.users(id) on delete cascade,
   flashcard_id uuid not null references public.flashcards(id) on delete cascade,
   box          smallint not null default 0 check (box between 0 and 5),
   due_at       timestamptz not null default now(),
@@ -145,7 +183,7 @@ create table if not exists public.card_progress (
 -- ---------------------------------------------------------------
 create table if not exists public.quiz_results (
   id       uuid primary key default gen_random_uuid(),
-  user_id  uuid not null default auth.uid() references auth.users(id) on delete cascade,
+  user_id  uuid not null default public.current_user_id() references public.users(id) on delete cascade,
   case_id  uuid not null references public.cases(id) on delete cascade,
   score    int not null check (score >= 0),
   total    int not null check (total between 1 and 20),
@@ -159,7 +197,7 @@ create index if not exists quiz_results_user_idx on public.quiz_results (user_id
 -- ---------------------------------------------------------------
 create table if not exists public.ai_usage (
   id         bigint generated always as identity primary key,
-  user_id    uuid not null references auth.users(id) on delete cascade,
+  user_id    uuid not null references public.users(id) on delete cascade,
   task       text not null,
   created_at timestamptz not null default now()
 );
