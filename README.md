@@ -108,12 +108,16 @@ src/components/               UI pieces (Dossier, Wordmark, …)
 src/lib/db.ts                 Postgres pool as caselab_app + withUser()
 src/lib/                      PII guard, case loading, types
 tests/                        Vitest + PGlite
-railway.json                  Railway build / pre-deploy / start
+.railway/railway.ts           Railway build / pre-deploy / start (IaC)
 ```
 
 ## Deploy: Railway
 
-Project: **caselab** in "Goon Monster's Projects". The folder is already linked with `npx @railway/cli link`.
+**Live:** https://web-production-8e46.up.railway.app
+
+Project: **caselab** in "Goon Monster's Projects". It has two services, `Postgres` and `web`. The folder is linked with `npx @railway/cli link`. The deploy config lives in `.railway/railway.ts` (Railway Infrastructure-as-Code). Variables are *unmanaged*, so they're set only in the Railway dashboard, never in the repo.
+
+The setup is already done. To recreate it in a new project:
 
 1. **Database:** **+ New → Database → PostgreSQL**. Skip this if you already added one in setup step 2.
 2. **App:** **+ New → GitHub Repository → SamuelK52/Criminology-Case-Studies**, branch `main`. Every push to `main` then deploys.
@@ -123,6 +127,6 @@ Project: **caselab** in "Goon Monster's Projects". The folder is already linked 
    - `ANTHROPIC_API_KEY`, from Milestone 3.
 4. **Domain:** go to the app service → **Settings → Networking → Generate Domain**.
 
-`railway.json` runs `npm run db:setup` as the **pre-deploy** step, so new migrations apply automatically before each release. The app then starts with `npm run start` and is health-checked on `/`.
+`.railway/railway.ts` runs `npm run db:setup` as the **pre-deploy** step, so new migrations apply automatically before each release. The app then starts with `npm run start` and is health-checked on `/`.
 
 **Backups:** turn on Railway's Postgres backups (Postgres service → **Backups**) to meet the daily-backup requirement. Students can also export and import their own data as JSON (Milestone 7).
