@@ -2,7 +2,7 @@
 
 A study app for criminology students: a bank of real criminal cases with AI summaries, study resources, spaced-repetition flashcards, quizzes, prosecution-vs-defence argument ladders and progress tracking.
 
-- Stack: Next.js 16 (App Router, TypeScript), Tailwind CSS 4, Supabase (Postgres + Auth + RLS), Anthropic API, Vercel.
+- Stack: Next.js 16 (App Router, TypeScript), Tailwind CSS 4, Supabase (Postgres + Auth + RLS), Anthropic API, Railway (hosting).
 - The original single-file prototype is in `reference/caselab.html`. It is the source of truth for content, wording and style.
 - The brief is in `docs/BRIEF.md`, the plan in `docs/PLAN.md`, and judgement calls in `DECISIONS.md`.
 
@@ -62,7 +62,7 @@ Open http://localhost:3000.
 |---|---|---|
 | `NEXT_PUBLIC_SUPABASE_URL` | browser + server | no |
 | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | browser + server (RLS protects the data) | no |
-| `SUPABASE_DB_URL` | `npm run db:setup` on your machine only. Don't add it to Vercel | **yes** |
+| `SUPABASE_DB_URL` | `npm run db:setup` on your machine only. Don't add it to Railway | **yes** |
 | `ANTHROPIC_API_KEY` | server routes only (Milestone 3+) | **yes** |
 | `ANTHROPIC_MODEL` | optional, defaults to `claude-sonnet-5-5` | no |
 
@@ -92,6 +92,13 @@ src/proxy.ts                  refreshes the Supabase session (Next 16's "middlew
 tests/                        Vitest + PGlite
 ```
 
-## Deploy (Milestone 8)
+## Deploy: Railway
 
-Import the GitHub repo in Vercel and add `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `ANTHROPIC_API_KEY` and, optionally, `ANTHROPIC_MODEL`. Full steps come with Milestone 8.
+The app is deployed on [Railway](https://railway.com). `railway.json` sets the build (`npm run build`), the start command (`npm run start`, which listens on Railway's `$PORT`) and a health check on `/`.
+
+1. Link once from the project folder: `npx @railway/cli login`, then `npx @railway/cli link` (or `init` for a new project).
+2. In the Railway service, open **Variables** and add `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `ANTHROPIC_API_KEY` and, optionally, `ANTHROPIC_MODEL`.
+   - `NEXT_PUBLIC_*` values are built into the browser bundle, so after changing them, **redeploy** (not just restart).
+   - Don't add `SUPABASE_DB_URL`. It is only for `npm run db:setup` on your machine.
+3. Connect the service to the GitHub repo (**Settings → Source**) so every push to `main` deploys. Or deploy by hand with `npx @railway/cli up`.
+4. In Supabase **Authentication → URL Configuration**, add the Railway domain (`https://<service>.up.railway.app`) as the Site URL / redirect URL. This matters from Milestone 2 on.
