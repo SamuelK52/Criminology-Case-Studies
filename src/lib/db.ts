@@ -31,8 +31,10 @@ function client(): Sql {
   if (!url) throw new Error(SETUP_MESSAGE);
   const host = new URL(url).hostname;
   const local = host === "localhost" || host === "127.0.0.1" || host.endsWith(".railway.internal");
+  // DB_POOL_MAX=1 for a local PGlite server (one shared session: parallel connections collide).
+  const max = Math.min(Math.max(Number(process.env.DB_POOL_MAX) || 10, 1), 50);
   const sql = postgres(url, {
-    max: 10,
+    max,
     idle_timeout: 20,
     connect_timeout: 10,
     ssl: local ? false : "prefer",

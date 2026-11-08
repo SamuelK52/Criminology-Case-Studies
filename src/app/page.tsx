@@ -1,35 +1,33 @@
+import Link from "next/link";
 import { Suspense } from "react";
+import { AppHeader } from "@/components/AppHeader";
 import { Dossier, Outcomes } from "@/components/Dossier";
-import { Wordmark } from "@/components/Wordmark";
+import { getViewer, type Viewer } from "@/lib/auth";
 import { loadCases } from "@/lib/cases";
+import { PERMISSION_LABELS, ROLES, type Permission } from "@/lib/permissions";
 import { caseColour, isLightColour } from "@/lib/types";
 
-// Milestone 1: prove the case bank loads from Postgres. Routing, auth and tabs arrive in later milestones.
 // The shell prerenders; anything that reads the session/database streams in behind <Suspense>.
+// Case tabs (Summary, Resources, Flashcards…) arrive in Milestones 3–7.
 export default function Home() {
   return (
     <div className="wrap">
-      <header className="app-header">
-        <div>
-          <Wordmark />
-          <h1 className="headline">
+      <AppHeader
+        page="home"
+        title={
+          <>
             Criminal
             <br />
             Case Files
-          </h1>
-          <div className="sub">
-            CaseLab Criminology — a student&apos;s archive of real cases: summaries, sources, flashcards, quizzes and
-            both sides of the argument.
-          </div>
-        </div>
-        <div className="meta-col">
-          Malaysia · UK · US · Italy
-          <br />
-          <Suspense fallback="Opening the drawer…">
-            <CaseCount />
-          </Suspense>
-        </div>
-      </header>
+          </>
+        }
+      >
+        Malaysia · UK · US · Italy
+        <br />
+        <Suspense fallback="Opening the drawer…">
+          <CaseCount />
+        </Suspense>
+      </AppHeader>
 
       <Suspense fallback={<ArchiveSkeleton />}>
         <Archive />
@@ -39,12 +37,14 @@ export default function Home() {
 }
 
 async function CaseCount() {
-  const { cases } = await loadCases();
+  const v = await getViewer();
+  const { cases } = await loadCases(v?.id ?? null);
   return `${cases.length} case dossier${cases.length === 1 ? "" : "s"}`;
 }
 
 async function Archive() {
-  const { cases, error } = await loadCases();
+  const v = await getViewer();
+  const { cases, error } = await loadCases(v?.id ?? null);
   const cur = cases[0];
   return (
     <div className="layout">
@@ -83,11 +83,48 @@ async function Archive() {
                 <p>{error}</p>
               </div>
             )}
+            {!error && <Access v={v} />}
             {cur && <Dossier c={cur} />}
             {cur && <Outcomes c={cur} />}
           </div>
         </div>
       </main>
+    </div>
+  );
+}
+
+const SHOWN: Permission[] = ["view", "add", "edit", "del", "ai", "backup", "manageClasses", "manageUsers"];
+
+/** What this role can do (FR-09). The tools themselves appear, or stay hidden, as later milestones add them. */
+function Access({ v }: { v: Viewer | null }) {
+  if (!v) {
+    return (
+      <p className="sub">
+        You&apos;re browsing the shared case bank.{" "}
+        <Link href="/login" style={{ color: "inherit" }}>
+          Sign in
+        </Link>{" "}
+        to keep notes, flashcard progress and quiz scores.
+      </p>
+    );
+  }
+  const r = ROLES[v.role];
+  return (
+    <div className="card">
+      <div className="lbl">Your access · {r.name}</div>
+      <ul className="access">
+        {SHOWN.map((p) => (
+          <li key={p} data-no={!r.perm[p] || undefined}>
+            {PERMISSION_LABELS[p]}
+            {!r.perm[p] && <span className="sr-only"> (not available for your role)</span>}
+          </li>
+        ))}
+      </ul>
+      {v.requestedRole === "lecturer" && (
+        <p className="sub" style={{ marginBottom: 0 }}>
+          Your lecturer request is waiting for the builder. Until then you have student access.
+        </p>
+      )}
     </div>
   );
 }

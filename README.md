@@ -11,8 +11,19 @@ A study app for criminology students: a bank of real criminal cases with AI summ
 | Milestone | State |
 |---|---|
 | 1. Setup: tokens, fonts, schema, RLS, seed | ✅ done |
-| 2. Auth & roles | next |
-| 3–8 | to do |
+| 2. Auth & roles: sign-up/in/out, class codes, role-based UI, `/classes`, `/admin` | ✅ done |
+| 3. Case bank & summary | next |
+| 4–8 | to do |
+
+## Accounts and roles
+
+- **Sign up** at `/login` → *Create account*. Choose Student, Study group or Lecturer, and optionally enter a class code.
+  - Lecturer is a *request*: the account works as a Student until the builder approves it on `/admin`.
+  - Builder can't be chosen at sign-up.
+- **Passwords** are hashed with scrypt. After 10 wrong passwords for one email in 15 minutes, sign-in for that email pauses for 15 minutes.
+- **Sessions** last 30 days, in an httpOnly cookie. **Sign out** deletes the session in the database too.
+- **`/classes`:** lecturers (and the builder) create classes with a join code like `CRIM101-2026`. Students and study-group members join or leave with the code.
+- **`/admin`:** builder only. Lists every account with its email, approves lecturer requests and changes roles. The last builder can't demote themselves.
 
 ## How the database is protected
 
@@ -52,7 +63,7 @@ npm run db:setup
 
 This applies each file in `db/migrations/` once (recorded in `schema_migrations`), gives `caselab_app` its login password and loads `db/seed.sql`. It's safe to run again; Railway runs it before every deploy.
 
-### 4. Make yourself the builder (after Milestone 2, once you have signed up)
+### 4. Make yourself the builder (once you have signed up)
 
 ```bash
 npm run db:setup -- --builder you@example.com
@@ -75,6 +86,7 @@ Open http://localhost:3000.
 | `DATABASE_URL` | `npm run db:setup` (owner connection). The app only takes host/port/database from it, never the owner login | **yes** |
 | `APP_DB_PASSWORD` | the app's `caselab_app` login, and set by `db:setup` | **yes** |
 | `APP_DATABASE_URL` | optional full runtime URL; overrides the two above | **yes** |
+| `DB_POOL_MAX` | optional pool size, default 10. Use `1` with a local PGlite server | no |
 | `ANTHROPIC_API_KEY` | server routes only (Milestone 3+) | **yes** |
 | `ANTHROPIC_MODEL` | optional, defaults to `claude-sonnet-5-5` | no |
 
@@ -133,7 +145,7 @@ The setup is already done. To recreate it in a new project:
 
 `.github/workflows/deploy.yml` runs on every push and pull request:
 
-1. **test:** typecheck, lint, and the 39 tests.
+1. **test:** typecheck, lint, and the tests.
 2. **deploy** (pushes to `main` only, after the tests pass):
    - asks Railway to deploy exactly the pushed commit (`railway redeploy --commit <sha>`);
    - waits until Railway reports `SUCCESS` (and fails the run if the deploy fails);
