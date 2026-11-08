@@ -129,4 +129,16 @@ The setup is already done. To recreate it in a new project:
 
 `.railway/railway.ts` runs `npm run db:setup` as the **pre-deploy** step, so new migrations apply automatically before each release. The app then starts with `npm run start` and is health-checked on `/`.
 
+**Changing deploy settings:** edit `.railway/railway.ts`, then preview and apply. Railway doesn't read the file on push; `config apply` is what changes the service.
+
+```bash
+npx @railway/cli config plan
+```
+
+```bash
+npx @railway/cli config apply --yes
+```
+
+On Windows, the `railway` SDK checks the CLI version by running a bare `railway --version`, which can't find npm's `railway.cmd` shim. Put the folder containing the real `railway.exe` (inside `@railway/cli/bin`) first on `PATH` before running `plan` or `apply`.
+
 **Backups:** turn on Railway's Postgres backups (Postgres service → **Backups**) to meet the daily-backup requirement. Students can also export and import their own data as JSON (Milestone 7).
