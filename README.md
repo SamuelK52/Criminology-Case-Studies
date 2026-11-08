@@ -120,7 +120,7 @@ Project: **caselab** in "Goon Monster's Projects". It has two services, `Postgre
 The setup is already done. To recreate it in a new project:
 
 1. **Database:** **+ New → Database → PostgreSQL**. Skip this if you already added one in setup step 2.
-2. **App:** **+ New → GitHub Repository → SamuelK52/Criminology-Case-Studies**, branch `main`. Every push to `main` then deploys.
+2. **App:** **+ New → GitHub Repository → SamuelK52/Criminology-Case-Studies**, branch `main`. Every push to `main` then deploys automatically. This needs Railway's GitHub app ("Railway App") installed on the repo by its owner, SamuelK52. Without it, Railway can still build the public repo, but pushes don't trigger deploys.
 3. **App variables** (the app service → **Variables**):
    - `DATABASE_URL` = `${{Postgres.DATABASE_URL}}`. This is a reference variable over Railway's private network.
    - `APP_DB_PASSWORD` = the same random string as in `.env.local`, or a new one; the pre-deploy step applies it.
