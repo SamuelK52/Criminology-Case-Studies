@@ -11,7 +11,7 @@
     "start": "next start",
     "lint": "eslint",
     "test": "vitest run",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "next typegen && tsc --noEmit",
     "db:setup": "node --env-file-if-exists=.env.local scripts/db-setup.mjs"
   },
   "dependencies": {
