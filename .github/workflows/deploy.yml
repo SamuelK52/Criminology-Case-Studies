@@ -68,18 +68,27 @@ jobs:
 
       - name: Deploy this commit
         run: |
-          railway redeploy --yes \
-            --project "$RAILWAY_PROJECT_ID" --environment "$RAILWAY_ENVIRONMENT" \
-            --service "$RAILWAY_SERVICE" --commit "$GITHUB_SHA"
+          # Surface Railway's message as an annotation so it shows in the run summary.
+          if ! out=$(railway redeploy --yes \
+                       --project "$RAILWAY_PROJECT_ID" --environment "$RAILWAY_ENVIRONMENT" \
+                       --service "$RAILWAY_SERVICE" --commit "$GITHUB_SHA" 2>&1); then
+            echo "$out"
+            echo "::error title=railway redeploy failed::$(echo "$out" | tail -n 5 | tr '\n' ' ')"
+            exit 1
+          fi
+          echo "$out"
 
       - name: Wait for Railway to finish
         timeout-minutes: 15
         run: |
           echo "Waiting for the deployment of ${GITHUB_SHA::7}…"
           while true; do
-            json=$(railway deployment list --json \
-                     --project "$RAILWAY_PROJECT_ID" --environment "$RAILWAY_ENVIRONMENT" \
-                     --service "$RAILWAY_SERVICE" 2>/dev/null || echo '[]')
+            if ! json=$(railway deployment list --json \
+                          --project "$RAILWAY_PROJECT_ID" --environment "$RAILWAY_ENVIRONMENT" \
+                          --service "$RAILWAY_SERVICE" 2>&1); then
+              echo "::warning title=railway deployment list failed::$(echo "$json" | tail -n 3 | tr '\n' ' ')"
+              json='[]'
+            fi
             status=$(echo "$json" | jq -r --arg sha "$GITHUB_SHA" \
                      '[.[] | select(.meta.commitHash == $sha)][0].status // "NOT_FOUND"')
             echo "$(date -u +%H:%M:%S) $status"
