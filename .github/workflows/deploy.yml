@@ -1,0 +1,100 @@
+# CaseLab CI/CD: test every push and pull request; deploy main to Railway.
+#
+# Deploys use the Railway CLI with a *project token* (scoped to the caselab
+# project's production environment), stored as the GitHub secret RAILWAY_TOKEN.
+# Railway builds the pushed commit from the connected GitHub repo, runs the
+# pre-deploy step (npm run db:setup: migrations + seed), then starts the app.
+name: Test and deploy
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  RAILWAY_CLI_VERSION: 5.71.0
+  RAILWAY_PROJECT_ID: 5fc2817f-a743-4fa6-8f8a-043b8bd40497
+  RAILWAY_ENVIRONMENT: production
+  RAILWAY_SERVICE: web
+  LIVE_URL: https://web-production-8e46.up.railway.app
+
+jobs:
+  test:
+    name: Typecheck, lint, test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npm test
+
+  deploy:
+    name: Deploy to Railway
+    needs: test
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    # One deploy at a time, oldest first: overlapping deploys can race the
+    # pre-deploy step that sets the app role's password (DECISIONS.md #19).
+    concurrency:
+      group: railway-production
+      cancel-in-progress: false
+    environment:
+      name: production
+      url: ${{ env.LIVE_URL }}
+    env:
+      RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+    steps:
+      - name: Check the Railway token is set
+        run: |
+          if [ -z "$RAILWAY_TOKEN" ]; then
+            echo "::error::Add the RAILWAY_TOKEN repository secret (README → Deploy → GitHub Actions)."
+            exit 1
+          fi
+
+      - name: Install Railway CLI
+        run: |
+          npm install -g "@railway/cli@${RAILWAY_CLI_VERSION}"
+          railway --version
+
+      - name: Deploy this commit
+        run: |
+          railway redeploy --yes \
+            --project "$RAILWAY_PROJECT_ID" --environment "$RAILWAY_ENVIRONMENT" \
+            --service "$RAILWAY_SERVICE" --commit "$GITHUB_SHA"
+
+      - name: Wait for Railway to finish
+        timeout-minutes: 15
+        run: |
+          echo "Waiting for the deployment of ${GITHUB_SHA::7}…"
+          while true; do
+            json=$(railway deployment list --json \
+                     --project "$RAILWAY_PROJECT_ID" --environment "$RAILWAY_ENVIRONMENT" \
+                     --service "$RAILWAY_SERVICE" 2>/dev/null || echo '[]')
+            status=$(echo "$json" | jq -r --arg sha "$GITHUB_SHA" \
+                     '[.[] | select(.meta.commitHash == $sha)][0].status // "NOT_FOUND"')
+            echo "$(date -u +%H:%M:%S) $status"
+            case "$status" in
+              SUCCESS) exit 0 ;;
+              FAILED|CRASHED|REMOVED|SKIPPED) echo "::error::Railway deployment ended as $status"; exit 1 ;;
+            esac
+            sleep 15
+          done
+
+      - name: Smoke-test the live site
+        run: |
+          for i in 1 2 3 4 5; do
+            if curl -fsS --max-time 20 "$LIVE_URL" | grep -q "Canny Ong murder case"; then
+              echo "Live site serves the case bank."; exit 0
+            fi
+            sleep 10
+          done
+          echo "::error::$LIVE_URL did not show the case bank"; exit 1

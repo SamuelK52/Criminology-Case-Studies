@@ -120,7 +120,7 @@ Project: **caselab** in "Goon Monster's Projects". It has two services, `Postgre
 The setup is already done. To recreate it in a new project:
 
 1. **Database:** **+ New → Database → PostgreSQL**. Skip this if you already added one in setup step 2.
-2. **App:** **+ New → GitHub Repository → SamuelK52/Criminology-Case-Studies**, branch `main`. Every push to `main` then deploys automatically. This needs Railway's GitHub app ("Railway App") installed on the repo by its owner, SamuelK52. Without it, Railway can still build the public repo, but pushes don't trigger deploys.
+2. **App:** **+ New → GitHub Repository → SamuelK52/Criminology-Case-Studies**, branch `main`. Pushes are deployed by GitHub Actions (below), not by Railway's GitHub app.
 3. **App variables** (the app service → **Variables**):
    - `DATABASE_URL` = `${{Postgres.DATABASE_URL}}`. This is a reference variable over Railway's private network.
    - `APP_DB_PASSWORD` = the same random string as in `.env.local`, or a new one; the pre-deploy step applies it.
@@ -128,6 +128,25 @@ The setup is already done. To recreate it in a new project:
 4. **Domain:** go to the app service → **Settings → Networking → Generate Domain**.
 
 `.railway/railway.ts` runs `npm run db:setup` as the **pre-deploy** step, so new migrations apply automatically before each release. The app then starts with `npm run start` and is health-checked on `/`.
+
+### Automatic deploys: GitHub Actions
+
+`.github/workflows/deploy.yml` runs on every push and pull request:
+
+1. **test:** typecheck, lint, and the 39 tests.
+2. **deploy** (pushes to `main` only, after the tests pass):
+   - asks Railway to deploy exactly the pushed commit (`railway redeploy --commit <sha>`);
+   - waits until Railway reports `SUCCESS` (and fails the run if the deploy fails);
+   - checks the live site shows the case bank.
+
+   Deploys run one at a time.
+
+It needs one secret. **Create it once:**
+
+1. Railway → **caselab** project → **Settings → Tokens** → **Create Token**. Choose environment **production** and name it `github-actions`. Copy the token; Railway shows it only once.
+2. GitHub → **SamuelK52/Criminology-Case-Studies → Settings → Secrets and variables → Actions → New repository secret**. Name it `RAILWAY_TOKEN` and paste the token as the value.
+
+The token can deploy only the caselab production environment. To revoke it, delete it in Railway; to replace it, create a new one and update the secret. You can also run the workflow by hand from the **Actions** tab ("Run workflow").
 
 **Changing deploy settings:** edit `.railway/railway.ts`, then preview and apply. Railway doesn't read the file on push; `config apply` is what changes the service.
 
