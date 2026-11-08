@@ -1,7 +1,8 @@
 # CaseLab CI/CD: test every push and pull request; deploy main to Railway.
 #
-# Deploys use the Railway CLI with a *project token* (scoped to the caselab
-# project's production environment), stored as the GitHub secret RAILWAY_TOKEN.
+# Deploys use the Railway CLI with a *workspace token* (scoped to the
+# "Goon Monster's Projects" workspace), stored as the GitHub secret
+# RAILWAY_API_TOKEN. Every command names the project, environment and service.
 # Railway builds the pushed commit from the connected GitHub repo, runs the
 # pre-deploy step (npm run db:setup: migrations + seed), then starts the app.
 name: Test and deploy
@@ -51,12 +52,12 @@ jobs:
       name: production
       url: ${{ env.LIVE_URL }}
     env:
-      RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+      RAILWAY_API_TOKEN: ${{ secrets.RAILWAY_API_TOKEN }}
     steps:
       - name: Check the Railway token is set
         run: |
-          if [ -z "$RAILWAY_TOKEN" ]; then
-            echo "::error::Add the RAILWAY_TOKEN repository secret (README → Deploy → GitHub Actions)."
+          if [ -z "$RAILWAY_API_TOKEN" ]; then
+            echo "::error::Add the RAILWAY_API_TOKEN repository secret (README → Deploy → GitHub Actions)."
             exit 1
           fi
 

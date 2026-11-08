@@ -143,10 +143,10 @@ The setup is already done. To recreate it in a new project:
 
 It needs one secret. **Create it once:**
 
-1. Railway → **caselab** project → **Settings → Tokens** → **Create Token**. Choose environment **production** and name it `github-actions`. Copy the token; Railway shows it only once.
-2. GitHub → **SamuelK52/Criminology-Case-Studies → Settings → Secrets and variables → Actions → New repository secret**. Name it `RAILWAY_TOKEN` and paste the token as the value.
+1. Railway → avatar → **Account Settings → Tokens** (https://railway.com/account/tokens). Name it `github-actions`, choose the workspace **Goon Monster's Projects**, and click **Create**. Copy the token; Railway shows it only once.
+2. GitHub → **SamuelK52/Criminology-Case-Studies → Settings → Secrets and variables → Actions → New repository secret**. Name it `RAILWAY_API_TOKEN` and paste the token as the value.
 
-The token can deploy only the caselab production environment. To revoke it, delete it in Railway; to replace it, create a new one and update the secret. You can also run the workflow by hand from the **Actions** tab ("Run workflow").
+This is a **workspace token**, so it can reach every project in "Goon Monster's Projects", not just caselab. Keep it only in the GitHub secret. To revoke it, delete it in Railway; to replace it, create a new one and update the secret. You can also run the workflow by hand from the **Actions** tab ("Run workflow").
 
 **Changing deploy settings:** edit `.railway/railway.ts`, then preview and apply. Railway doesn't read the file on push; `config apply` is what changes the service.
 
