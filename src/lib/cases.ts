@@ -2,6 +2,7 @@ import "server-only";
 import { connection } from "next/server";
 import { cache } from "react";
 import { SETUP_MESSAGE, dbConfigured, withUser } from "@/lib/db";
+import type { ResourceRow } from "@/lib/resources";
 import type { CaseRow } from "@/lib/types";
 
 export type CaseLoad = { cases: CaseRow[]; error: string | null };
@@ -34,4 +35,22 @@ export async function loadNote(caseId: string, userId: string): Promise<string> 
   const [row] = await withUser(userId, (tx) => tx<{ body: string }[]>`
     select body from notes where case_id = ${caseId} and user_id = ${userId}`);
   return row?.body ?? "";
+}
+
+/** Resources for a case this user may see (RLS): their own, plus ones shared with their class or everyone. */
+export async function loadResources(caseId: string, userId: string): Promise<ResourceRow[]> {
+  const rows = await withUser(userId, (tx) => tx<ResourceRow[]>`
+    select r.id, r.title, r.kind, r.url, r.shared, r.class_id, cl.name as class_name, r.user_id
+    from resources r left join classes cl on cl.id = r.class_id
+    where r.case_id = ${caseId}
+    order by r.shared desc, r.created_at, r.id`);
+  return [...rows];
+}
+
+/** Classes this user teaches (a builder may share with any class). Used for the "Share with" choice. */
+export async function loadTaughtClasses(userId: string, role: string): Promise<{ id: string; name: string }[]> {
+  if (role !== "lecturer" && role !== "builder") return [];
+  const rows = await withUser(userId, (tx) => tx<{ id: string; name: string }[]>`
+    select id, name from classes where lecturer_id = ${userId} or ${role === "builder"} order by name`);
+  return [...rows];
 }

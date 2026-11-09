@@ -25,6 +25,15 @@ export const SUMMARY_MODES = [
 ] as const;
 export type SummaryMode = (typeof SUMMARY_MODES)[number];
 
+/** Resources tab, "Suggest what to look up" — the prototype's wording. */
+export function sourcesPrompt(c: CaseFacts): string {
+  return `${caseText(c)}\nList the types of primary and secondary sources a student should look up for this case (courts, inquiry reports, archives), what each would establish, and search terms to use. Do not invent specific citations or case numbers.`;
+}
+
+/** Shown instead of AI suggestions when AI is offline or not available for the role (prototype text). */
+export const OFFLINE_SOURCES =
+  "Court websites and judgments; official inquiry reports; reputable news for timelines, cross-checked against court documents.";
+
 export function summaryPrompt(c: CaseFacts, notes: string, mode: SummaryMode): string {
   return `${caseText(c)}\n\nStudent notes:\n${notes || "(none)"}\n\nWrite a ${mode}. For the 7-part structure use: 1 Case background, 2 Investigation, 3 Criminological analysis (named theory only where it fits), 4 Court proceedings, 5 Final verdict, 6 Evaluation, 7 References to look up. End with "Verify before submitting:" and specific facts to confirm.`;
 }

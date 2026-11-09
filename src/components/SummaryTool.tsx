@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { saveNotes } from "@/app/cases/actions";
 import { SUMMARY_MODES } from "@/lib/ai/prompts";
 import { PII_MESSAGE, hasPII } from "@/lib/pii";
+import { useAiStream } from "./useAiStream";
 
 type Props = {
   caseId: string;
@@ -20,14 +21,9 @@ export function SummaryTool({ caseId, initialNotes, canEdit, canAI, aiReady }: P
   const [notes, setNotes] = useState(initialNotes);
   const [save, setSave] = useState<{ text: string; bad?: boolean }>({ text: "" });
   const [mode, setMode] = useState<string>(SUMMARY_MODES[0]);
-  const [out, setOut] = useState("");
-  const [busy, setBusy] = useState(false);
+  const { out, setOut, busy, run, stop } = useAiStream();
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const abort = useRef<AbortController | null>(null);
   const lastSaved = useRef(initialNotes);
-
-  // Stop a running summary if the user leaves the case.
-  useEffect(() => () => abort.current?.abort(), []);
 
   function onNotes(value: string) {
     setNotes(value);
@@ -48,44 +44,12 @@ export function SummaryTool({ caseId, initialNotes, canEdit, canAI, aiReady }: P
     }, SAVE_DELAY);
   }
 
-  async function summarise() {
+  function summarise() {
     if (hasPII(notes)) {
       setOut(PII_MESSAGE);
       return;
     }
-    abort.current?.abort();
-    const ac = new AbortController();
-    abort.current = ac;
-    setBusy(true);
-    setOut("Thinking…");
-    try {
-      const res = await fetch("/api/ai/summary", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ caseId, notes, mode }),
-        signal: ac.signal,
-      });
-      if (!res.ok || !res.body) {
-        const e = (await res.json().catch(() => ({}))) as { error?: string; retryAt?: string | null };
-        const when = e.retryAt ? ` Try again at ${new Date(e.retryAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}.` : "";
-        setOut(`${e.error ?? "Couldn't generate — try again in a moment."}${when}`);
-        return;
-      }
-      const reader = res.body.pipeThrough(new TextDecoderStream()).getReader();
-      let text = "";
-      for (let r = await reader.read(); !r.done; r = await reader.read()) {
-        text += r.value;
-        setOut(text);
-      }
-      if (!text) setOut("The AI returned nothing — try again.");
-    } catch (e) {
-      if ((e as Error).name !== "AbortError") setOut("Couldn't reach the server — check your connection and try again.");
-    } finally {
-      if (abort.current === ac) {
-        abort.current = null;
-        setBusy(false);
-      }
-    }
+    void run("/api/ai/summary", { caseId, notes, mode });
   }
 
   return (
@@ -118,7 +82,7 @@ export function SummaryTool({ caseId, initialNotes, canEdit, canAI, aiReady }: P
               {busy ? "Summarising…" : "Summarise"}
             </button>
             {busy && (
-              <button className="btn ghost" type="button" onClick={() => abort.current?.abort()}>
+              <button className="btn ghost" type="button" onClick={stop}>
                 Stop
               </button>
             )}

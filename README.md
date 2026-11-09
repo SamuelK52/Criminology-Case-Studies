@@ -13,15 +13,22 @@ A study app for criminology students: a bank of real criminal cases with AI summ
 | 1. Setup: tokens, fonts, schema, RLS, seed | ✅ done |
 | 2. Auth & roles: sign-up/in/out, class codes, role-based UI, `/classes`, `/admin` | ✅ done |
 | 3. Case bank & summary: search, add own case, dossier, notes autosave, streamed AI summary | ✅ done |
-| 4. Resources | next |
-| 5–8 | to do |
+| 4. Resources: add/edit/remove per case, class sharing for lecturers, AI source suggestions | ✅ done |
+| 5. Flashcards & quiz | next |
+| 6–8 | to do |
 
 ## AI
 
-- `/api/ai/summary` builds the prompt **on the server** from the case record and the student's notes. The browser never sends a prompt. The `RULES` system prompt (`src/lib/ai/rules.ts`) is the prototype's text word for word, and a test checks it.
+- `/api/ai/summary` and `/api/ai/sources` build the prompt **on the server** from the case record and the student's notes. The browser never sends a prompt. The `RULES` system prompt (`src/lib/ai/rules.ts`) is the prototype's text word for word, and a test checks it.
 - The model is `claude-sonnet-5-5` unless `ANTHROPIC_MODEL` is set. Answers stream as they are written. If Claude declines a request, it is retried on another model server-side (`fallbacks: "default"`).
 - Limit: 20 AI requests per user per rolling hour, enforced in Postgres (`ai_take_token`). Study-group accounts have no AI.
-- If `ANTHROPIC_API_KEY` is missing, or the AI service fails, the header shows **"AI: offline — built-in study mode"**. The case bank and notes keep working.
+- If `ANTHROPIC_API_KEY` is missing, or the AI service fails, the header shows **"AI: offline — built-in study mode"**. The case bank, notes and resources keep working, and the Resources tab shows the prototype's built-in source starting points instead of AI suggestions.
+
+## Resources (FR-04)
+
+- Each case has a **Resources** tab (`/cases/<code>/resources`): title, type (Judgment, Article, Lecture, Book, Video, Note) and a link or citation. Add, edit and remove; everything is stored in Postgres, so it shows on any device.
+- Only `http(s)://` links are clickable; anything else is shown as a citation.
+- Lecturers can share a resource with a class they teach ("Who can see it"); members of that class, including study-group accounts, see it read-only. The builder can share with everyone. Lecturers can never change or remove students' resources (RLS).
 
 ## Accounts and roles
 

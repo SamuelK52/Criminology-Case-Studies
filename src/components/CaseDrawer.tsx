@@ -9,7 +9,7 @@ import { caseColour, isLightColour, type CaseRow } from "@/lib/types";
 type DrawerCase = Pick<CaseRow, "id" | "code" | "name" | "focus" | "jurisdiction" | "owner_id" | "class_id">;
 
 /** Case bank: index-card drawer with search (FR-02) and "Add your own case" for roles that can add. */
-export function CaseDrawer({ cases, current, canAdd, signedIn }: { cases: DrawerCase[]; current: string | null; canAdd: boolean; signedIn: boolean }) {
+export function CaseDrawer({ cases, current, canAdd, signedIn, tabPath = "" }: { cases: DrawerCase[]; current: string | null; canAdd: boolean; signedIn: boolean; tabPath?: string }) {
   const [q, setQ] = useState("");
   const list = useMemo(() => cases.filter((c) => matchesCase(c, q)), [cases, q]);
   const [state, action, pending] = useActionState<AddCaseState, FormData>(addCase, { error: null });
@@ -32,7 +32,7 @@ export function CaseDrawer({ cases, current, canAdd, signedIn }: { cases: Drawer
           return (
             <Link
               key={c.id}
-              href={`/cases/${c.code}`}
+              href={`/cases/${c.code}${tabPath}`}
               className="case"
               style={{ "--c": col } as React.CSSProperties}
               data-light={isLightColour(col) || undefined}
