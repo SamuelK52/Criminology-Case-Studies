@@ -1,5 +1,5 @@
 import "server-only";
-import { aiConfigured, aiErrorMessage, streamAnswer } from "@/lib/ai/claude";
+import { aiConfigured, aiErrorMessage, completeAnswer, streamAnswer } from "@/lib/ai/claude";
 import { getViewer, type Viewer } from "@/lib/auth";
 import { withUser } from "@/lib/db";
 import { can } from "@/lib/permissions";
@@ -33,16 +33,10 @@ export async function readBody(req: Request): Promise<Record<string, unknown> | 
 }
 
 /**
- * Read the case as this user (RLS) and take one AI token (20 per rolling hour) in one transaction,
- * then stream Claude's answer to `prompt(case)` as plain text.
+ * Read the case as this user (RLS) and take one AI token (20 per rolling hour) in one transaction.
+ * Returns the case, or the error response to send (404 not visible, 429 over the limit).
  */
-export async function streamCaseAnswer(
-  req: Request,
-  v: Viewer,
-  caseId: string,
-  task: string,
-  prompt: (c: CaseRow) => string,
-): Promise<Response> {
+export async function gateCase(v: Viewer, caseId: string, task: string): Promise<CaseRow | Response> {
   const gate = await withUser(v.id, async (tx) => {
     const [c] = await tx<CaseRow[]>`
       select id, code, name, jurisdiction, focus, overview, original_verdict, latest_outcome,
@@ -56,8 +50,21 @@ export async function streamCaseAnswer(
   if (!gate.allowed) {
     return aiJson(429, "You've used your 20 AI requests for this hour.", { retryAt: gate.retryAt?.toISOString() ?? null });
   }
+  return gate.c;
+}
 
-  const answer = streamAnswer(prompt(gate.c), req.signal);
+/** Gate (see gateCase), then stream Claude's answer to `prompt(case)` as plain text. */
+export async function streamCaseAnswer(
+  req: Request,
+  v: Viewer,
+  caseId: string,
+  task: string,
+  prompt: (c: CaseRow) => string,
+): Promise<Response> {
+  const c = await gateCase(v, caseId, task);
+  if (c instanceof Response) return c;
+
+  const answer = streamAnswer(prompt(c), req.signal);
   // Wait for the first chunk so a rejected request becomes a clear error, not an empty stream.
   let first: IteratorResult<string>;
   try {
@@ -91,4 +98,26 @@ export async function streamCaseAnswer(
   return new Response(stream, {
     headers: { "Content-Type": "text/plain; charset=utf-8", "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff" },
   });
+}
+
+/** Gate (see gateCase), then Claude's whole answer to `prompt(case)` passed to `handle` — for JSON tools. */
+export async function completeCaseAnswer(
+  req: Request,
+  v: Viewer,
+  caseId: string,
+  task: string,
+  prompt: (c: CaseRow) => string,
+  handle: (text: string, c: CaseRow) => Promise<Response> | Response,
+): Promise<Response> {
+  const c = await gateCase(v, caseId, task);
+  if (c instanceof Response) return c;
+  let text: string;
+  try {
+    text = await completeAnswer(prompt(c), req.signal);
+  } catch (e) {
+    const { status, message } = aiErrorMessage(e);
+    if (status >= 500) console.error(`AI ${task} failed`, e);
+    return aiJson(status, message);
+  }
+  return handle(text, c);
 }

@@ -52,3 +52,10 @@ export function aiErrorMessage(e: unknown): { status: number; message: string } 
   if ((e as Error)?.name === "AbortError") return { status: 499, message: "Stopped." };
   return { status: 500, message: "Couldn't generate — try again in a moment." };
 }
+
+/** The whole answer as one string (for JSON tools: flashcards, quiz). Same request as streamAnswer. */
+export async function completeAnswer(prompt: string, signal?: AbortSignal): Promise<string> {
+  let text = "";
+  for await (const chunk of streamAnswer(prompt, signal)) text += chunk;
+  return text;
+}

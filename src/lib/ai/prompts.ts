@@ -30,6 +30,16 @@ export function sourcesPrompt(c: CaseFacts): string {
   return `${caseText(c)}\nList the types of primary and secondary sources a student should look up for this case (courts, inquiry reports, archives), what each would establish, and search terms to use. Do not invent specific citations or case numbers.`;
 }
 
+/** Flashcards tab, "Generate more with AI" — the prototype's wording (RULES goes in the system prompt). */
+export function flashcardsPrompt(c: CaseFacts): string {
+  return `${caseText(c)}\nMake 8 flashcards mixing recall and application (evidence-type, procedural issue, theory). Return JSON array of [front, back].`;
+}
+
+/** Quiz tab, "Generate a fresh 5-question quiz" — the prototype's wording. */
+export function quizPrompt(c: CaseFacts): string {
+  return `${caseText(c)}\nWrite 5 multiple-choice questions mixing recall and application. Return JSON array of {q, o:[4 options], a: exact correct option text, e: explanation}.`;
+}
+
 /** Shown instead of AI suggestions when AI is offline or not available for the role (prototype text). */
 export const OFFLINE_SOURCES =
   "Court websites and judgments; official inquiry reports; reputable news for timelines, cross-checked against court documents.";

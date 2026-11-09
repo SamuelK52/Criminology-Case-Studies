@@ -3,6 +3,7 @@ import { connection } from "next/server";
 import { cache } from "react";
 import { SETUP_MESSAGE, dbConfigured, withUser } from "@/lib/db";
 import type { ResourceRow } from "@/lib/resources";
+import type { StudyCard } from "@/lib/study";
 import type { CaseRow } from "@/lib/types";
 
 export type CaseLoad = { cases: CaseRow[]; error: string | null };
@@ -53,4 +54,31 @@ export async function loadTaughtClasses(userId: string, role: string): Promise<{
   const rows = await withUser(userId, (tx) => tx<{ id: string; name: string }[]>`
     select id, name from classes where lecturer_id = ${userId} or ${role === "builder"} order by name`);
   return [...rows];
+}
+
+/**
+ * Flashcards for a case with this user's progress: hand-written seed cards first, then the cards
+ * derived from the case record, lecturer cards, then the user's own AI cards (prototype order).
+ * Signed-out visitors get the shared cards with no progress.
+ */
+export async function loadCards(caseId: string, userId: string | null): Promise<StudyCard[]> {
+  const rows = await withUser(userId, (tx) => tx<{ id: string; front: string; back: string; source: string; box: number | null; due_at: Date | null }[]>`
+    select f.id, f.front, f.back, f.source, p.box, p.due_at
+    from flashcards f
+    left join card_progress p on p.flashcard_id = f.id and p.user_id = ${userId}
+    where f.case_id = ${caseId}
+    order by case f.source when 'seed' then 0 when 'derived' then 1 when 'lecturer' then 2 else 3 end,
+             f.slot nulls last, f.created_at, f.id`);
+  return rows.map((r) => ({ id: r.id, front: r.front, back: r.back, source: r.source, box: r.box, dueAt: r.due_at ? r.due_at.getTime() : null }));
+}
+
+export type QuizScore = { score: number; total: number; takenAt: number };
+
+/** This user's latest quiz scores for a case (newest first). */
+export async function loadQuizScores(caseId: string, userId: string, limit = 5): Promise<QuizScore[]> {
+  const rows = await withUser(userId, (tx) => tx<{ score: number; total: number; taken_at: Date }[]>`
+    select score, total, taken_at from quiz_results
+    where case_id = ${caseId} and user_id = ${userId}
+    order by taken_at desc limit ${limit}`);
+  return rows.map((r) => ({ score: r.score, total: r.total, takenAt: r.taken_at.getTime() }));
 }

@@ -14,12 +14,13 @@ A study app for criminology students: a bank of real criminal cases with AI summ
 | 2. Auth & roles: sign-up/in/out, class codes, role-based UI, `/classes`, `/admin` | ✅ done |
 | 3. Case bank & summary: search, add own case, dossier, notes autosave, streamed AI summary | ✅ done |
 | 4. Resources: add/edit/remove per case, class sharing for lecturers, AI source suggestions | ✅ done |
-| 5. Flashcards & quiz | next |
-| 6–8 | to do |
+| 5. Flashcards & quiz: spaced repetition, AI cards, built-in and AI quizzes with saved scores | ✅ done |
+| 6. Arguments | next |
+| 7–8 | to do |
 
 ## AI
 
-- `/api/ai/summary` and `/api/ai/sources` build the prompt **on the server** from the case record and the student's notes. The browser never sends a prompt. The `RULES` system prompt (`src/lib/ai/rules.ts`) is the prototype's text word for word, and a test checks it.
+- `/api/ai/summary`, `/api/ai/sources`, `/api/ai/flashcards` and `/api/ai/quiz` build the prompt **on the server** from the case record and the student's notes. The browser never sends a prompt. The `RULES` system prompt (`src/lib/ai/rules.ts`) is the prototype's text word for word, and a test checks it.
 - The model is `claude-sonnet-5-5` unless `ANTHROPIC_MODEL` is set. Answers stream as they are written. If Claude declines a request, it is retried on another model server-side (`fallbacks: "default"`).
 - Limit: 20 AI requests per user per rolling hour, enforced in Postgres (`ai_take_token`). Study-group accounts have no AI.
 - If `ANTHROPIC_API_KEY` is missing, or the AI service fails, the header shows **"AI: offline — built-in study mode"**. The case bank, notes and resources keep working, and the Resources tab shows the prototype's built-in source starting points instead of AI suggestions.
@@ -29,6 +30,13 @@ A study app for criminology students: a bank of real criminal cases with AI summ
 - Each case has a **Resources** tab (`/cases/<code>/resources`): title, type (Judgment, Article, Lecture, Book, Video, Note) and a link or citation. Add, edit and remove; everything is stored in Postgres, so it shows on any device.
 - Only `http(s)://` links are clickable; anything else is shown as a citation.
 - Lecturers can share a resource with a class they teach ("Who can see it"); members of that class, including study-group accounts, see it read-only. The builder can share with everyone. Lecturers can never change or remove students' resources (RLS).
+
+## Flashcards and quiz (FR-06, FR-07)
+
+- **Flashcards** (`/cases/<code>/flashcards`): case 16's seven hand-written cards, four cards built from each case record (kept in step by a database trigger), and your own AI cards. "Knew it" moves a card up a box (due again in 1, 3, 7, 14, then 30 days); "Missed it" sends it to box 0 and back into this session's queue. Box 3+ counts as known. The new box is worked out on the server from the stored one.
+- Anyone can flip cards; progress is saved for signed-in users, study group included. "Reset progress" and "Generate more with AI" are hidden from study group. New AI cards replace your earlier AI cards for that case, as in the prototype.
+- **Quiz** (`/cases/<code>/quiz`): the prototype's built-in quiz from the case record (outcome, themes, jurisdiction; wrong options from other cases), or a fresh 5-question AI quiz. Pick an answer to see the right one and the explanation; the score is saved when every question is answered. Recent scores are listed under the quiz; the Progress tab (Milestone 7) will total them.
+- With AI off, flashcards and the built-in quiz still work.
 
 ## Accounts and roles
 

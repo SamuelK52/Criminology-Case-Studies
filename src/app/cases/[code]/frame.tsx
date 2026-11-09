@@ -7,17 +7,23 @@ import { aiConfigured } from "@/lib/ai/claude";
 import { getViewer, type Viewer } from "@/lib/auth";
 import { loadCase, loadCases } from "@/lib/cases";
 import { PERMISSION_LABELS, ROLES, can, type Permission } from "@/lib/permissions";
-import type { CaseRow } from "@/lib/types";
+import { isLightColour, type CaseRow } from "@/lib/types";
 
 // Shared frame for every case tab: header, case drawer, folder tabs and the coloured folder body.
 // Each tab is its own URL (/cases/07, /cases/07/resources, …) so it can be linked and reloaded.
 
-/** Folder tabs in the prototype's order and colours. The rest arrive in Milestones 5–7. */
+/** Folder tabs in the prototype's order and colours. Arguments, Progress and Features arrive in Milestones 6–7. */
 export const TABS = [
   { name: "Summary", path: "", colour: "var(--signal)" },
   { name: "Resources", path: "/resources", colour: "var(--cobalt)" },
+  { name: "Flashcards", path: "/flashcards", colour: "var(--emerald)" },
+  { name: "Quiz", path: "/quiz", colour: "var(--lemon)" }, // light: dark text
 ] as const;
 export type TabName = (typeof TABS)[number]["name"];
+
+/** AI tools for this viewer: on, offline (no key), or none (signed out / study group). */
+export const aiStateFor = (v: Viewer | null): "on" | "offline" | "none" =>
+  v && can(v.role, "ai") ? (aiConfigured() ? "on" : "offline") : "none";
 
 type Params = Promise<{ code: string }>;
 
@@ -98,12 +104,13 @@ async function CaseView({ params, tab: tabName, children }: { params: Params; ta
               className="tab"
               style={{ "--t": t.colour } as React.CSSProperties}
               aria-current={t === tab ? "page" : undefined}
+              data-light={isLightColour(t.colour) || undefined}
             >
               {t.name}
             </Link>
           ))}
         </nav>
-        <div className="folder" style={{ "--folder": tab.colour } as React.CSSProperties}>
+        <div className="folder" style={{ "--folder": tab.colour } as React.CSSProperties} data-light={isLightColour(tab.colour) || undefined}>
           <div className="folder-cap">
             <span>
               File {c.code} / {tab.name}
