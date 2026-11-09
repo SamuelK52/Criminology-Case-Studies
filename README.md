@@ -15,12 +15,13 @@ A study app for criminology students: a bank of real criminal cases with AI summ
 | 3. Case bank & summary: search, add own case, dossier, notes autosave, streamed AI summary | ✅ done |
 | 4. Resources: add/edit/remove per case, class sharing for lecturers, AI source suggestions | ✅ done |
 | 5. Flashcards & quiz: spaced repetition, AI cards, built-in and AI quizzes with saved scores | ✅ done |
-| 6. Arguments | next |
-| 7–8 | to do |
+| 6. Arguments: AI argument ladder, mock-trial notes, one-point counter-check | ✅ done |
+| 7. Progress, export & features | next |
+| 8 | to do |
 
 ## AI
 
-- `/api/ai/summary`, `/api/ai/sources`, `/api/ai/flashcards` and `/api/ai/quiz` build the prompt **on the server** from the case record and the student's notes. The browser never sends a prompt. The `RULES` system prompt (`src/lib/ai/rules.ts`) is the prototype's text word for word, and a test checks it.
+- `/api/ai/summary`, `/api/ai/sources`, `/api/ai/flashcards`, `/api/ai/quiz` and `/api/ai/arguments` build the prompt **on the server** from the case record and the student's notes. The browser never sends a prompt. The `RULES` system prompt (`src/lib/ai/rules.ts`) is the prototype's text word for word, and a test checks it.
 - The model is `claude-sonnet-5-5` unless `ANTHROPIC_MODEL` is set. Answers stream as they are written. If Claude declines a request, it is retried on another model server-side (`fallbacks: "default"`).
 - Limit: 20 AI requests per user per rolling hour, enforced in Postgres (`ai_take_token`). Study-group accounts have no AI.
 - If `ANTHROPIC_API_KEY` is missing, or the AI service fails, the header shows **"AI: offline — built-in study mode"**. The case bank, notes and resources keep working, and the Resources tab shows the prototype's built-in source starting points instead of AI suggestions.
@@ -37,6 +38,13 @@ A study app for criminology students: a bank of real criminal cases with AI summ
 - Anyone can flip cards; progress is saved for signed-in users, study group included. "Reset progress" and "Generate more with AI" are hidden from study group. New AI cards replace your earlier AI cards for that case, as in the prototype.
 - **Quiz** (`/cases/<code>/quiz`): the prototype's built-in quiz from the case record (outcome, themes, jurisdiction; wrong options from other cases), or a fresh 5-question AI quiz. Pick an answer to see the right one and the explanation; the score is saved when every question is answered. Recent scores are listed under the quiz; the Progress tab (Milestone 7) will total them.
 - With AI off, flashcards and the built-in quiz still work.
+
+## Arguments (FR-08)
+
+- **Arguments** tab (`/cases/<code>/arguments`): choose criminal (prosecution) or civil (plaintiff) and 3–5 rounds, then **Build ladder**. Each round is claim + evidence type → defence counter → rebuttal → defence reply, followed by what the court found, strongest/weakest points, a standard-of-proof reminder and an evaluation question.
+- **Mock-trial speaking notes**: openings, cross-examination questions and closings for both sides. **Counter-check one point**: the strongest counter, a rebuttal, and which standard of proof matters.
+- The prompts are the prototype's, word for word (a test runs the prototype's own templates and compares). Anything not from the trial record is labelled **"likely argument"**.
+- All three need AI. With AI off the tab says so; study-group accounts see a note instead of the tools.
 
 ## Accounts and roles
 

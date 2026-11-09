@@ -40,6 +40,31 @@ export function quizPrompt(c: CaseFacts): string {
   return `${caseText(c)}\nWrite 5 multiple-choice questions mixing recall and application. Return JSON array of {q, o:[4 options], a: exact correct option text, e: explanation}.`;
 }
 
+// ---------------------------------------------------------------- Arguments tab (FR-08)
+
+/** The prototype's selects. */
+export const LADDER_SIDES = ["Criminal (prosecution)", "Civil (plaintiff)"] as const;
+export const LADDER_ROUNDS = ["3 arguments", "4 arguments", "5 arguments"] as const;
+export type LadderSide = (typeof LADDER_SIDES)[number];
+export type LadderRounds = (typeof LADDER_ROUNDS)[number];
+
+/** "Build ladder" — the prototype's wording, including the "likely argument" label rule. */
+export function ladderPrompt(c: CaseFacts, side: LadderSide, rounds: LadderRounds): string {
+  const civ = side.startsWith("Civil");
+  const p = civ ? "Plaintiff" : "Prosecution";
+  return `${caseText(c)}\nBuild an argument ladder with ${rounds}. Use "${p}"${civ ? " (civil, balance of probabilities)" : " (criminal, beyond reasonable doubt)"}. For each round: ${p} claim + evidence type relied on → Defence counter-argument → Rebuttal → Defence reply. Label anything not from the trial record "likely argument". Keep both sides equal in effort. If the case ended in exoneration or quashing, present the prosecution's historical case and show why it collapsed. Then: What the court actually found; Strongest and weakest point for each side; Standard of proof reminder; one Evaluation question. End with "Verify before submitting:".`;
+}
+
+/** "Mock-trial speaking notes" — the prototype's wording. */
+export function mootPrompt(c: CaseFacts): string {
+  return `${caseText(c)}\nTurn this into mock-trial speaking notes for both sides: a 60-second opening, 4 cross-examination questions, a 60-second closing. Label likely arguments.`;
+}
+
+/** "Counter-check one point" — the prototype's wording. */
+export function counterPrompt(c: CaseFacts, point: string): string {
+  return `${caseText(c)}\nA student argues: "${point}". Give the strongest counter-argument from the opposing side, then a direct rebuttal to that counter, then which standard of proof matters and why. Label likely arguments.`;
+}
+
 /** Shown instead of AI suggestions when AI is offline or not available for the role (prototype text). */
 export const OFFLINE_SOURCES =
   "Court websites and judgments; official inquiry reports; reputable news for timelines, cross-checked against court documents.";
