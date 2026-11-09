@@ -8,7 +8,7 @@ export default defineRailway(() => {
     source: github("SamuelK52/Criminology-Case-Studies"),
     build: { buildCommand: "npm run build", buildEnvironment: "V3", builder: "RAILPACK" },
     start: "npm run start",
-    healthcheck: "/",
+    healthcheck: "/api/health", // "/" redirects (307) to /cases/01; the check needs a 200
     healthcheckTimeout: 120,
     preDeploy: "npm run db:setup",
     replicas: { "sfo": 1 },
