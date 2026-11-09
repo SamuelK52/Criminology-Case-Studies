@@ -1,0 +1,30 @@
+import type { CaseRow } from "@/lib/types";
+
+// Prompt builders, copied from the prototype's ask() calls. Prompts are built on the server
+// from the case record (read with RLS) and the student's notes — the browser never sends a prompt.
+
+type CaseFacts = Pick<CaseRow, "name" | "jurisdiction" | "focus" | "overview" | "original_verdict" | "latest_outcome">;
+
+/** The prototype's caseText(), with the original verdict added when it is recorded (accuracy NFR). */
+export function caseText(c: CaseFacts): string {
+  const focus = c.focus.join(", ");
+  return (
+    `Case: ${c.name}${c.jurisdiction ? ` (${c.jurisdiction})` : ""}. ` +
+    (focus ? `Focus: ${focus}. ` : "") +
+    (c.overview ? `Overview: ${c.overview} ` : "") +
+    (c.original_verdict ? `Original verdict: ${c.original_verdict} ` : "") +
+    (c.latest_outcome ? `Recorded outcome: ${c.latest_outcome}` : "")
+  ).trim();
+}
+
+/** Summary modes, as in the prototype's select. */
+export const SUMMARY_MODES = [
+  "7-part assignment structure",
+  "Short revision summary",
+  "Key evidence & procedural issues",
+] as const;
+export type SummaryMode = (typeof SUMMARY_MODES)[number];
+
+export function summaryPrompt(c: CaseFacts, notes: string, mode: SummaryMode): string {
+  return `${caseText(c)}\n\nStudent notes:\n${notes || "(none)"}\n\nWrite a ${mode}. For the 7-part structure use: 1 Case background, 2 Investigation, 3 Criminological analysis (named theory only where it fits), 4 Court proceedings, 5 Final verdict, 6 Evaluation, 7 References to look up. End with "Verify before submitting:" and specific facts to confirm.`;
+}

@@ -6,6 +6,8 @@ export function friendlyDbError(e: unknown, fallback = "Something went wrong —
   const err = e as { code?: string; message?: string; constraint_name?: string };
   if (err?.code === "23514") return "That value isn't allowed — check for IC or bank numbers and length limits.";
   if (err?.code === "23505" && err.constraint_name === "classes_join_code_key") return "Another class already uses that join code.";
+  if (err?.code === "23505" && err.constraint_name === "cases_name_scope_key") return "That case is already in the list.";
+  if (/row-level security/.test(err?.message ?? "")) return "Your role isn't allowed to do that.";
   if (err?.code && FRIENDLY.has(err.code) && err.message) return err.message;
   console.error(e);
   return fallback;

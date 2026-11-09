@@ -15,6 +15,7 @@
     "db:setup": "node --env-file-if-exists=.env.local scripts/db-setup.mjs"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^1.6.0",
     "next": "16.4.5",
     "postgres": "^4.1.0",
     "react": "19.3.0",

@@ -121,7 +121,7 @@ jobs:
       - name: Smoke-test the live site
         run: |
           for i in 1 2 3 4 5; do
-            if curl -fsS --max-time 20 "$LIVE_URL" | grep -q "Canny Ong murder case"; then
+            if curl -fsSL --max-time 20 "$LIVE_URL" | grep -q "Canny Ong murder case"; then
               echo "Live site serves the case bank."; exit 0
             fi
             sleep 10
