@@ -12,13 +12,15 @@ import { isLightColour, type CaseRow } from "@/lib/types";
 // Shared frame for every case tab: header, case drawer, folder tabs and the coloured folder body.
 // Each tab is its own URL (/cases/07, /cases/07/resources, …) so it can be linked and reloaded.
 
-/** Folder tabs in the prototype's order and colours. Progress and Features arrive in Milestone 7. */
+/** Folder tabs in the prototype's order and colours. */
 export const TABS = [
   { name: "Summary", path: "", colour: "var(--signal)" },
   { name: "Resources", path: "/resources", colour: "var(--cobalt)" },
   { name: "Flashcards", path: "/flashcards", colour: "var(--emerald)" },
   { name: "Quiz", path: "/quiz", colour: "var(--lemon)" }, // light: dark text
   { name: "Arguments", path: "/arguments", colour: "var(--violet)" },
+  { name: "Progress", path: "/progress", colour: "var(--black)" },
+  { name: "Features", path: "/features", colour: "var(--cobalt)" },
 ] as const;
 export type TabName = (typeof TABS)[number]["name"];
 

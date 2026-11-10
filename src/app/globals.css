@@ -170,6 +170,13 @@ body {
   .res { display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; border-top: 1px dashed var(--line); padding-top: 10px; margin-top: 10px; font-size: 15px; }
   .res a { color: var(--cobalt); word-break: break-all; }
 
+  table { border-collapse: collapse; width: 100%; background: #fffdf7; }
+  th, td { border: 1px solid var(--line); padding: 8px 10px; text-align: left; vertical-align: top; font: 14px/1.5 var(--body); }
+  th { font: 600 11px var(--mono); text-transform: uppercase; letter-spacing: .08em; background: var(--ink); color: var(--paper); }
+  td.num { font-variant-numeric: tabular-nums; }
+  .bar { background: var(--line); border-radius: 3px; height: 6px; min-width: 60px; }
+  .bar > span { display: block; height: 6px; border-radius: 3px; }
+
   .feat { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 18px; }
   .feat .card { padding: 18px; background-image: none; transform: rotate(var(--r, 0deg)); }
   .feat .card::before { display: none; }

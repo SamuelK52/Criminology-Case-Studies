@@ -3,6 +3,7 @@ import { connection } from "next/server";
 import { cache } from "react";
 import { SETUP_MESSAGE, dbConfigured, withUser } from "@/lib/db";
 import type { ResourceRow } from "@/lib/resources";
+import type { CaseProgressRow } from "@/lib/progress";
 import type { StudyCard } from "@/lib/study";
 import type { CaseRow } from "@/lib/types";
 
@@ -81,4 +82,23 @@ export async function loadQuizScores(caseId: string, userId: string, limit = 5):
     where case_id = ${caseId} and user_id = ${userId}
     order by taken_at desc limit ${limit}`);
   return rows.map((r) => ({ score: r.score, total: r.total, takenAt: r.taken_at.getTime() }));
+}
+
+/** FR-11: per-case card and quiz counts for this user, over every case they can see (RLS). */
+export async function loadProgress(userId: string): Promise<CaseProgressRow[]> {
+  const rows = await withUser(userId, (tx) => tx<CaseProgressRow[]>`
+    select c.code, c.name, c.focus,
+           count(f.id)::int as cards,
+           count(p.flashcard_id)::int as seen,
+           (count(*) filter (where p.box >= 3))::int as known,
+           (count(f.id) filter (where p.flashcard_id is null or p.due_at <= now()))::int as due,
+           coalesce(q.runs, 0)::int as runs, coalesce(q.score, 0)::int as score, coalesce(q.total, 0)::int as total
+    from cases c
+    left join flashcards f on f.case_id = c.id
+    left join card_progress p on p.flashcard_id = f.id and p.user_id = ${userId}
+    left join (select case_id, count(*) runs, sum(score) score, sum(total) total
+               from quiz_results where user_id = ${userId} group by case_id) q on q.case_id = c.id
+    group by c.id, q.runs, q.score, q.total
+    order by (c.owner_id is not null), (c.class_id is not null), length(c.code), c.code`);
+  return [...rows];
 }

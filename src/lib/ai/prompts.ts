@@ -65,6 +65,25 @@ export function counterPrompt(c: CaseFacts, point: string): string {
   return `${caseText(c)}\nA student argues: "${point}". Give the strongest counter-argument from the opposing side, then a direct rebuttal to that counter, then which standard of proof matters and why. Label likely arguments.`;
 }
 
+/** Features tab, "Suggest features" — the prototype's wording, with its default audience. */
+export function featuresPrompt(forWhom: string): string {
+  return `The app is a criminology study tool with: case bank, AI summaries, resource organiser, flashcards, quizzes, prosecution vs defence argument ladders. Suggest 6 simple, buildable features for: ${forWhom || "a student revising for exams"}. For each: name, what it does, difficulty (Easy/Medium/Advanced).`;
+}
+
+/** The prototype's FEATS roadmap, word for word: [difficulty, name, what it does]. */
+export const FEATURES: [string, string, string][] = [
+  ["Easy", "Spaced-repetition flashcards", "Cards you miss come back sooner; cards you know fade out."],
+  ["Easy", "Case comparison table", "Pick 2–4 cases and see jurisdiction, evidence type, core failure and outcome side by side."],
+  ["Easy", "Theory matcher", "Type a theme like 'false confessions' and get 2–4 fitting cases with where each fits and doesn't."],
+  ["Easy", "Verify-before-submitting list", "Auto-list of dates and outcomes to confirm against court records for each assignment."],
+  ["Medium", "Assignment worksheet export", "Export the 7-part structure with a 'Your conclusion' line as a Word doc."],
+  ["Medium", "Timeline builder", "Arrest → trial → appeals → later rulings on one line per case."],
+  ["Medium", "Mock-trial timer", "60-second opening, cross-exam questions and closing with a countdown."],
+  ["Medium", "Progress dashboard", "Quiz scores per case and per theme so you see weak topics."],
+  ["Advanced", "Group study room", "Classmates join the same case and split prosecution / defence live."],
+  ["Advanced", "PDF reader", "Upload a judgment PDF and get summary, key holdings and quiz questions from it."],
+];
+
 /** Shown instead of AI suggestions when AI is offline or not available for the role (prototype text). */
 export const OFFLINE_SOURCES =
   "Court websites and judgments; official inquiry reports; reputable news for timelines, cross-checked against court documents.";

@@ -16,12 +16,12 @@ A study app for criminology students: a bank of real criminal cases with AI summ
 | 4. Resources: add/edit/remove per case, class sharing for lecturers, AI source suggestions | ✅ done |
 | 5. Flashcards & quiz: spaced repetition, AI cards, built-in and AI quizzes with saved scores | ✅ done |
 | 6. Arguments: AI argument ladder, mock-trial notes, one-point counter-check | ✅ done |
-| 7. Progress, export & features | next |
-| 8 | to do |
+| 7. Progress, export & features: themes weakest first, per-case table, JSON backup/restore, roadmap | ✅ done |
+| 8. Polish & deploy: 400px mobile check, contrast, rate limits, error states, every NFR | next |
 
 ## AI
 
-- `/api/ai/summary`, `/api/ai/sources`, `/api/ai/flashcards`, `/api/ai/quiz` and `/api/ai/arguments` build the prompt **on the server** from the case record and the student's notes. The browser never sends a prompt. The `RULES` system prompt (`src/lib/ai/rules.ts`) is the prototype's text word for word, and a test checks it.
+- `/api/ai/summary`, `/api/ai/sources`, `/api/ai/flashcards`, `/api/ai/quiz`, `/api/ai/arguments` and `/api/ai/features` build the prompt **on the server** from the case record and the student's notes. The browser never sends a prompt. The `RULES` system prompt (`src/lib/ai/rules.ts`) is the prototype's text word for word, and a test checks it.
 - The model is `claude-sonnet-5-5` unless `ANTHROPIC_MODEL` is set. Answers stream as they are written. If Claude declines a request, it is retried on another model server-side (`fallbacks: "default"`).
 - Limit: 20 AI requests per user per rolling hour, enforced in Postgres (`ai_take_token`). Study-group accounts have no AI.
 - If `ANTHROPIC_API_KEY` is missing, or the AI service fails, the header shows **"AI: offline — built-in study mode"**. The case bank, notes and resources keep working, and the Resources tab shows the prototype's built-in source starting points instead of AI suggestions.
@@ -45,6 +45,12 @@ A study app for criminology students: a bank of real criminal cases with AI summ
 - **Mock-trial speaking notes**: openings, cross-examination questions and closings for both sides. **Counter-check one point**: the strongest counter, a rebuttal, and which standard of proof matters.
 - The prompts are the prototype's, word for word (a test runs the prototype's own templates and compares). Anything not from the trial record is labelled **"likely argument"**.
 - All three need AI. With AI off the tab says so; study-group accounts see a note instead of the tools.
+
+## Progress, backup and features (FR-11, FR-12, FR-14)
+
+- **Progress** tab: cases studied, cards due and quiz average; **weakest themes first** (a theme's score is the mean of its studied cases; a case's score is cards known, averaged with its quiz % when it has one); and a per-case table linking to each deck. Study-group accounts see their own progress.
+- **Backup**: students (and the builder) can **Download backup** (`/api/export`, a JSON file of their notes, resources, card progress, AI cards, quiz scores and own cases) and **Restore** from the file or pasted text (`/api/import`). Restore merges in one transaction: missing or emptied notes come back, newer work is kept, duplicates are skipped, nothing is deleted. Anything the database refuses (e.g. an IC number) cancels the whole import.
+- **Features** tab: the prototype's roadmap, plus AI feature ideas for roles with AI tools.
 
 ## Accounts and roles
 

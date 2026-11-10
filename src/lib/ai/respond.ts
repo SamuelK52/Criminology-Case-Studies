@@ -63,8 +63,18 @@ export async function streamCaseAnswer(
 ): Promise<Response> {
   const c = await gateCase(v, caseId, task);
   if (c instanceof Response) return c;
+  return streamText(req, task, prompt(c));
+}
 
-  const answer = streamAnswer(prompt(c), req.signal);
+/** For AI tools not tied to a case (Features ideas): take one AI token, then stream. */
+export async function streamPlainAnswer(req: Request, v: Viewer, task: string, prompt: string): Promise<Response> {
+  const [t] = await withUser(v.id, (tx) => tx<{ allowed: boolean; retry_at: Date | null }[]>`select * from ai_take_token(${task})`);
+  if (!t.allowed) return aiJson(429, "You've used your 20 AI requests for this hour.", { retryAt: t.retry_at?.toISOString() ?? null });
+  return streamText(req, task, prompt);
+}
+
+async function streamText(req: Request, task: string, prompt: string): Promise<Response> {
+  const answer = streamAnswer(prompt, req.signal);
   // Wait for the first chunk so a rejected request becomes a clear error, not an empty stream.
   let first: IteratorResult<string>;
   try {
