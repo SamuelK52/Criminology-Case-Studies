@@ -17,7 +17,7 @@ A study app for criminology students: a bank of real criminal cases with AI summ
 | 5. Flashcards & quiz: spaced repetition, AI cards, built-in and AI quizzes with saved scores | ✅ done |
 | 6. Arguments: AI argument ladder, mock-trial notes, one-point counter-check | ✅ done |
 | 7. Progress, export & features: themes weakest first, per-case table, JSON backup/restore, roadmap | ✅ done |
-| 8. Polish & deploy: 400px mobile check, contrast, rate limits, error states, every NFR | next |
+| 8. Polish & deploy: 400px mobile check, contrast, rate limits, error states, every NFR ([check](docs/NFR-CHECK.md)) | ✅ done |
 
 ## AI
 
@@ -56,7 +56,7 @@ A study app for criminology students: a bank of real criminal cases with AI summ
 
 - **Sign up** at `/login` → *Create account*. Choose Student, Study group or Lecturer, and optionally enter a class code.
   - Lecturer is a *request*: the account works as a Student until the builder approves it on `/admin`.
-  - Builder can't be chosen at sign-up.
+  - Builder can't be chosen at sign-up. To make the first builder, sign up, then run `npm run db:setup -- --builder you@example.com` against the database — for the live site, with `DATABASE_URL` set to the Postgres service's **public** URL (Railway → Postgres → Variables → `DATABASE_PUBLIC_URL`), in your own terminal so the URL never lands in a file.
 - **Passwords** are hashed with scrypt. After 10 wrong passwords for one email in 15 minutes, sign-in for that email pauses for 15 minutes.
 - **Sessions** last 30 days, in an httpOnly cookie. **Sign out** deletes the session in the database too.
 - **`/classes`:** lecturers (and the builder) create classes with a join code like `CRIM101-2026`. Students and study-group members join or leave with the code.

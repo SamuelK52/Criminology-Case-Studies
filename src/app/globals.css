@@ -11,7 +11,7 @@
   --paper-2: #e9e3d6;
   --rule: #cfd9e6;
   --hole: #141312;
-  --mute: #6b665d;
+  --mute: #625d54; /* darkened from #6b665d for 4.5:1 on paper-2 */
   --cobalt: #2547d0;
   --signal: #d9271e;
   --emerald: #11795b;
@@ -66,6 +66,8 @@ body {
   outline: 2px dashed var(--lemon) !important;
   outline-offset: 3px;
 }
+/* Lemon vanishes on paper and on the lemon folder: use ink there (3:1 focus contrast). */
+.card :focus-visible, .side :focus-visible, .folder[data-light] :focus-visible { outline-color: var(--ink) !important; }
 
 /* Component classes: ported from the prototype. They rely on layered
    backgrounds and sibling selectors that utilities express badly. */
@@ -81,8 +83,9 @@ body {
   .meta-col { font: 12px/1.6 var(--mono); color: #a29a8c; text-align: right; }
   @media (max-width: 640px) { .meta-col { text-align: left; } }
 
-  .layout { display: grid; grid-template-columns: 270px 1fr; gap: 28px; }
-  @media (max-width: 860px) { .layout { grid-template-columns: 1fr; } }
+  .layout { display: grid; grid-template-columns: 270px minmax(0, 1fr); gap: 28px; }
+  .layout > main { min-width: 0; } /* long content wraps or scrolls inside; the page never scrolls sideways */
+  @media (max-width: 860px) { .layout { grid-template-columns: minmax(0, 1fr); } }
 
   /* Case bank — index-card drawer */
   .side { background: var(--paper-2); color: var(--ink); padding: 16px; align-self: start; min-width: 0; box-shadow: 0 10px 24px rgba(0,0,0,.45); border-radius: 2px; }
@@ -98,13 +101,13 @@ body {
 
   /* Folder tabs */
   .tabs { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 0; padding-left: 6px; }
-  .tab { all: unset; cursor: pointer; position: relative; padding: 9px 22px 8px; margin-right: -6px; background: var(--t); color: #fff; font: italic 16px/1.2 var(--body); border-radius: 14px 14px 0 0; opacity: .72; transform: translateY(4px); transition: transform .15s, opacity .15s; }
+  .tab { all: unset; cursor: pointer; position: relative; padding: 9px 22px 8px; margin-right: -6px; background: var(--t); color: #fff; font: italic 16px/1.2 var(--body); border-radius: 14px 14px 0 0; opacity: .86; transform: translateY(4px); transition: transform .15s, opacity .15s; }
   .tab[data-light] { color: var(--ink); }
   .tab:hover { opacity: .9; transform: translateY(1px); }
   .tab[aria-selected="true"], .tab[aria-current="page"] { opacity: 1; transform: none; z-index: 2; padding-bottom: 12px; }
 
   .folder { background: var(--folder); padding: 28px clamp(14px, 3vw, 34px) 36px; position: relative; z-index: 1; box-shadow: 0 18px 40px rgba(0,0,0,.5); }
-  .folder-cap { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; font: 12px var(--mono); color: rgba(255,255,255,.85); margin-bottom: 16px; }
+  .folder-cap { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; font: 12px var(--mono); color: #ffffff; margin-bottom: 16px; }
   .folder[data-light] .folder-cap { color: var(--ink); }
   /* Text and controls sitting directly on the coloured folder (outside paper sheets) */
   .folder .pane > :not(.card):not(.feat), .folder .pane > :not(.card):not(.feat) .sub { color: #fff; font-size: 14px; }
@@ -141,6 +144,7 @@ body {
   .chip.check { background: var(--black); color: var(--lemon); }
 
   .field { width: 100%; box-sizing: border-box; background: #fffdf7; color: var(--ink); border: 1px solid var(--ink); border-radius: 0; padding: 9px 10px; font: 14px var(--mono); }
+  select.field { max-width: 100%; min-width: 0; text-overflow: ellipsis; }
   textarea.field { min-height: 130px; resize: vertical; line-height: 1.6; }
   .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 
@@ -187,7 +191,7 @@ body {
   .feat .card h3 { font: 400 22px/1 var(--display); text-transform: uppercase; margin: 8px 0 6px; }
   .feat .card p { margin: 0; font-size: 14px; }
 
-  .err { color: var(--signal); font: 12px/1.5 var(--mono); margin-top: 6px; }
+  .err { color: #b81f17; /* signal red, darkened for 4.5:1 on paper */ font: 12px/1.5 var(--mono); margin-top: 6px; }
   .err:empty { display: none; }
   .ok-msg { color: var(--emerald); font: 12px var(--mono); }
   .note { font: 12px var(--mono); color: var(--lemon); }

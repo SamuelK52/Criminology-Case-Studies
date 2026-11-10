@@ -1,0 +1,23 @@
+# Non-functional requirements — Milestone 8 check
+
+Each row of the brief's NFR table, with what was checked (2026-11-11) and how to repeat it.
+"Test" means an automated test in `tests/` that runs on every push before deploying.
+
+| Quality | Target | Result | Evidence / how to check |
+|---|---|---|---|
+| Speed | Pages open in under 3 s; switching tabs under 1 s; AI output streams | ✅ | Live (Railway, from Malaysia): `/cases/01` 0.41 s, `/cases/07` 0.33 s, `/cases/07/flashcards` 0.38 s, `/cases/07/quiz` 0.33 s, `/cases/07/progress` 0.34 s, `/login` 0.37 s full HTML (`curl -w %{time_total}`). Tabs are prefetched links, so switching only fetches the tab's data. AI answers stream chunk by chunk (checked locally against a stand-in API; live once `ANTHROPIC_API_KEY` is set). |
+| Easy to use | First flashcard flipped within 30 s of signing in | ✅ | Sign-in lands on a case; the **Flashcards** tab is one click and the first card flips on tap/Space/Enter. Flipping works even before signing in. |
+| Devices | Phone first; one column under 860 px; no horizontal scrolling | ✅ | Every page measured in a 400 px-wide frame (with and without a scrollbar): Summary, Resources, Flashcards, Quiz, Arguments, Progress, Features, Classes, sign-in, 404 and "no such case" — page width never exceeds the viewport. Two fixes made: the grid column could grow past the screen (`minmax(0, 1fr)`), and long dropdowns now shrink. Wide tables scroll inside their card. |
+| Availability | 24/7; case bank, flashcards and quizzes work if the AI is down | ✅ | Hosted on **Railway** instead of Vercel (DECISIONS #14). Health check `/api/health`; a failed deploy keeps the old release live (seen in Milestone 3). With no AI key the live site runs in "built-in study mode": case files, notes, resources, flashcards, the built-in quiz, progress and backup all work. |
+| Data safety | Daily database backups; student JSON export/import | ⚠️ owner action | JSON export/import: ✅ (FR-12, tests). **Daily backups must be switched on in Railway:** project caselab → Postgres → Backups → enable a daily schedule. This can't be done from the repo. |
+| Security | Real login; RLS on every table; AI key on the server; AI limited to 20/user/hour | ✅ | Test: every `public` table has RLS on; the app role is not superuser, can't bypass RLS, owns no tables. Test: every `/api/ai/*` route checks sign-in/role and takes an `ai_take_token` (20 per rolling hour) before calling Claude, and only `src/lib/ai/` (server-only) calls the API. Passwords: scrypt; sessions: hashed tokens in httpOnly cookies; sign-in throttled (10 failures / 15 min per email). |
+| Language | English | ✅ | All UI and AI prompts are English. |
+| Privacy | IC / 10–16-digit numbers refused with a clear message; no real personal data in seeds | ✅ | The same rule in the browser, the server and Postgres `has_pii()` check constraints (tests). Test: no seed line matches the IC/card pattern. Covered: case names, notes, resources, AI notes, counter-check points, feature requests, backups. |
+| Accuracy | Original verdict and latest outcome always shown separately; flagged cases show "verify latest outcome" | ✅ | The Summary tab shows "Original verdict" and "Latest legal outcome" as separate sections; flagged cases and every new own case carry the "verify latest outcome" chip. Test: separate columns, every seed case has an outcome, flagged cases exist. RULES system prompt verbatim (test). |
+| Accessibility | Keyboard-navigable, visible focus, readable contrast on every coloured background | ✅ | Test (`tests/contrast.test.ts`, 54 checks, colours read from `globals.css`): WCAG AA 4.5:1 for text on paper, the desk, every folder colour, chips, buttons, dimmed tabs and selected case cards; 3:1 for focus outlines. Fixes made: muted text darkened, error text darkened, inactive tabs less dimmed, folder captions solid white, focus outline in ink on paper and the lemon folder (lemon on dark). Keyboard: every control is a link, button or form field (or has `tabindex`); 0 click-only elements on the Flashcards page; flashcards flip with Space/Enter. |
+
+## Still for the owner
+
+1. **Railway backups:** turn on daily Postgres backups (above).
+2. **AI:** add `ANTHROPIC_API_KEY` to the `web` service when you want AI features; until then the site runs in built-in study mode.
+3. **First builder account:** sign up on the live site, then run `npm run db:setup -- --builder <your email>` once with `DATABASE_URL` set to the Postgres service's **public** URL (Railway → Postgres → Variables → `DATABASE_PUBLIC_URL`), in your own terminal so the URL never lands in a file.
