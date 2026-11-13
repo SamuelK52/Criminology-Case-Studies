@@ -42,8 +42,14 @@ describe("NFR Security", () => {
       .filter((p) => /streamAnswer\(|completeAnswer\(/.test(readFileSync(p, "utf8")));
     expect(users.map((p) => p.replace(/\\/g, "/")).sort()).toEqual(["src/lib/ai/claude.ts", "src/lib/ai/respond.ts"]);
   });
-  it("the Anthropic client is server-only", () => {
+  it("the AI clients (Claude and Gemini) are server-only, and Gemini is only reached through streamAnswer", () => {
     expect(readFileSync("src/lib/ai/claude.ts", "utf8")).toMatch(/^import "server-only";/);
+    expect(readFileSync("src/lib/ai/gemini.ts", "utf8")).toMatch(/^import "server-only";/);
+    const users = [...readdirSync("src", { recursive: true, withFileTypes: true })]
+      .filter((f) => f.isFile() && /\.tsx?$/.test(f.name))
+      .map((f) => join(f.parentPath, f.name).replace(/\\/g, "/"))
+      .filter((p) => /streamGemini\(/.test(readFileSync(p, "utf8")));
+    expect(users.sort()).toEqual(["src/lib/ai/claude.ts", "src/lib/ai/gemini.ts"]);
   });
 });
 

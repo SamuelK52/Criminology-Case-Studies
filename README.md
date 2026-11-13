@@ -22,9 +22,10 @@ A study app for criminology students: a bank of real criminal cases with AI summ
 ## AI
 
 - `/api/ai/summary`, `/api/ai/sources`, `/api/ai/flashcards`, `/api/ai/quiz`, `/api/ai/arguments` and `/api/ai/features` build the prompt **on the server** from the case record and the student's notes. The browser never sends a prompt. The `RULES` system prompt (`src/lib/ai/rules.ts`) is the prototype's text word for word, and a test checks it.
-- The model is `claude-sonnet-5-5` unless `ANTHROPIC_MODEL` is set. Answers stream as they are written. If Claude declines a request, it is retried on another model server-side (`fallbacks: "default"`).
+- **Provider:** Google **Gemini** when `GEMINI_API_KEY` is set (model `gemini-3.5-flash-lite` unless `GEMINI_MODEL` is set), otherwise **Claude** when `ANTHROPIC_API_KEY` is set (`claude-sonnet-5-5` unless `ANTHROPIC_MODEL` is set). Both get the same RULES system prompt, prompts, rate limit and PII checks.
+- Claude: Answers stream as they are written. If Claude declines a request, it is retried on another model server-side (`fallbacks: "default"`).
 - Limit: 20 AI requests per user per rolling hour, enforced in Postgres (`ai_take_token`). Study-group accounts have no AI.
-- If `ANTHROPIC_API_KEY` is missing, or the AI service fails, the header shows **"AI: offline — built-in study mode"**. The case bank, notes and resources keep working, and the Resources tab shows the prototype's built-in source starting points instead of AI suggestions.
+- If neither key is set, or the AI service fails, the header shows **"AI: offline — built-in study mode"**. The case bank, notes and resources keep working, and the Resources tab shows the prototype's built-in source starting points instead of AI suggestions.
 
 ## Resources (FR-04)
 
@@ -124,7 +125,9 @@ Open http://localhost:3000.
 | `APP_DB_PASSWORD` | the app's `caselab_app` login, and set by `db:setup` | **yes** |
 | `APP_DATABASE_URL` | optional full runtime URL; overrides the two above | **yes** |
 | `DB_POOL_MAX` | optional pool size, default 10. Use `1` with a local PGlite server | no |
-| `ANTHROPIC_API_KEY` | `/api/ai/*` only (server). Without it, AI shows as offline | **yes** |
+| `GEMINI_API_KEY` | `/api/ai/*` only (server). Uses Google Gemini. Without it (or the Anthropic key), AI shows as offline | **yes** (or Anthropic) |
+| `GEMINI_MODEL` | optional, defaults to `gemini-3.5-flash-lite` | no |
+| `ANTHROPIC_API_KEY` | `/api/ai/*` only (server). Used when no Gemini key is set | optional |
 | `ANTHROPIC_MODEL` | optional, defaults to `claude-sonnet-5-5` | no |
 
 Nothing is exposed to the browser: there are no `NEXT_PUBLIC_*` variables. `.env.local` is git-ignored.
@@ -173,7 +176,7 @@ The setup is already done. To recreate it in a new project:
 3. **App variables** (the app service → **Variables**):
    - `DATABASE_URL` = `${{Postgres.DATABASE_URL}}`. This is a reference variable over Railway's private network.
    - `APP_DB_PASSWORD` = the same random string as in `.env.local`, or a new one; the pre-deploy step applies it.
-   - `ANTHROPIC_API_KEY`: your key from console.anthropic.com. Set it here only, never in the repo.
+   - `GEMINI_API_KEY`: your key from aistudio.google.com (or `ANTHROPIC_API_KEY` from console.anthropic.com). Set it here only, never in the repo.
 4. **Domain:** go to the app service → **Settings → Networking → Generate Domain**.
 
 `.railway/railway.ts` runs `npm run db:setup` as the **pre-deploy** step, so new migrations apply automatically before each release. The app then starts with `npm run start` and is health-checked on `/`.
