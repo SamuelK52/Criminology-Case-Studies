@@ -9,7 +9,7 @@ import { CaseFrame, aiStateFor } from "../frame";
 /** Quiz tab (FR-07): a built-in quiz from the case record, or a fresh AI one; finished scores are saved. */
 export default function QuizPage({ params }: PageProps<"/cases/[code]/quiz">) {
   return (
-    <CaseFrame params={params} tab="Quiz">
+    <CaseFrame params={params}>
       {(c, v) => (
         <Suspense fallback={<div className="card" style={{ minHeight: 240 }} aria-busy="true" />}>
           <QuizView c={c} v={v} />

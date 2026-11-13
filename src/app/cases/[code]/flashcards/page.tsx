@@ -9,7 +9,7 @@ import { CaseFrame, aiStateFor } from "../frame";
 /** Flashcards tab (FR-06). Everyone can flip cards; signed-in users keep their spaced-repetition progress. */
 export default function FlashcardsPage({ params }: PageProps<"/cases/[code]/flashcards">) {
   return (
-    <CaseFrame params={params} tab="Flashcards">
+    <CaseFrame params={params}>
       {(c, v) => (
         <Suspense fallback={<div className="card flash" aria-busy="true" />}>
           <Deck c={c} v={v} />

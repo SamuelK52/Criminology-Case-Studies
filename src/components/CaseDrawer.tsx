@@ -1,15 +1,18 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useActionState, useMemo, useState } from "react";
 import { addCase, type AddCaseState } from "@/app/cases/actions";
 import { matchesCase } from "@/lib/search";
+import { tabFromPath } from "@/lib/tabs";
 import { caseColour, isLightColour, type CaseRow } from "@/lib/types";
 
 type DrawerCase = Pick<CaseRow, "id" | "code" | "name" | "focus" | "jurisdiction" | "owner_id" | "class_id">;
 
 /** Case bank: index-card drawer with search (FR-02) and "Add your own case" for roles that can add. */
-export function CaseDrawer({ cases, current, canAdd, signedIn, tabPath = "" }: { cases: DrawerCase[]; current: string | null; canAdd: boolean; signedIn: boolean; tabPath?: string }) {
+export function CaseDrawer({ cases, current, canAdd, signedIn }: { cases: DrawerCase[]; current: string | null; canAdd: boolean; signedIn: boolean }) {
+  const tabPath = tabFromPath(usePathname()).path; // switching case keeps the same tab
   const [q, setQ] = useState("");
   const list = useMemo(() => cases.filter((c) => matchesCase(c, q)), [cases, q]);
   const [state, action, pending] = useActionState<AddCaseState, FormData>(addCase, { error: null });

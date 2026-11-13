@@ -10,7 +10,7 @@ import { CaseFrame } from "../frame";
 /** Progress tab (FR-11, FR-12): every case you can see, weakest themes first, and your backup. */
 export default function ProgressPage({ params }: PageProps<"/cases/[code]/progress">) {
   return (
-    <CaseFrame params={params} tab="Progress">
+    <CaseFrame params={params}>
       {(_c, v) =>
         v ? (
           <Suspense fallback={<div className="card" style={{ minHeight: 240 }} aria-busy="true" />}>

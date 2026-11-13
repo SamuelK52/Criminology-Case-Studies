@@ -5,7 +5,7 @@ import { CaseFrame, aiStateFor } from "../frame";
 /** Features tab (FR-14): the prototype's roadmap, and AI feature ideas for roles with AI tools. */
 export default function FeaturesPage({ params }: PageProps<"/cases/[code]/features">) {
   return (
-    <CaseFrame params={params} tab="Features">
+    <CaseFrame params={params}>
       {(_c, v) => {
         const ai = aiStateFor(v);
         return (

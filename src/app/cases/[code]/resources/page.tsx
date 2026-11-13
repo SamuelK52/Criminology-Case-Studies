@@ -14,7 +14,7 @@ import { CaseFrame } from "../frame";
 /** Resources tab (FR-04): the student's sources for this case, class resources, and AI source suggestions. */
 export default function ResourcesPage({ params }: PageProps<"/cases/[code]/resources">) {
   return (
-    <CaseFrame params={params} tab="Resources">
+    <CaseFrame params={params}>
       {(c, v) => (
         <>
           <Dossier c={c} />

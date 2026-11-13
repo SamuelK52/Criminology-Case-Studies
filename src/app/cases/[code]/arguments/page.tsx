@@ -6,7 +6,7 @@ import { CaseFrame, aiStateFor } from "../frame";
 /** Arguments tab (FR-08): AI argument ladder, mock-trial notes and counter-check. */
 export default function ArgumentsPage({ params }: PageProps<"/cases/[code]/arguments">) {
   return (
-    <CaseFrame params={params} tab="Arguments">
+    <CaseFrame params={params}>
       {(c, v) => {
         const ai = aiStateFor(v);
         return (

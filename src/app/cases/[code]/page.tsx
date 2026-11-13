@@ -12,7 +12,7 @@ import { CaseFrame } from "./frame";
 /** Summary tab: the case file (original verdict and latest outcome kept apart), notes and the AI summary. */
 export default function CasePage({ params }: PageProps<"/cases/[code]">) {
   return (
-    <CaseFrame params={params} tab="Summary">
+    <CaseFrame params={params}>
       {(c, v) => (
         <>
           <Dossier c={c} />
